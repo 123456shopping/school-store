@@ -34,27 +34,35 @@
 
     <script>
         // 1. Firebase 配置 (請確保與你 topup.html 的一致)
-        const firebaseConfig = {
-            apiKey: "AIzaSy...",
-            projectId: "xinnini1222",
-          storageBucket: "xinnini1222.firebasestorage.app",
-            messagingSenderId: "1071285094200",
-            appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+      // 1. Firebase 配置 (請維持你原本的設定)
+const firebaseConfig = {
+    apiKey: "AIzaSy...",
+    projectId: "xinnini1222",
+    storageBucket: "xinnini1222.firebasestorage.app",
+    messagingSenderId: "1071285094200",
+    appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-        // 2. 密碼檢查功能 (你可以把 8888 改成你想要的數字)
-       window.onload = function() {
+// 【核心修正】網頁一打開就檢查：是否是剛掃完 QR Code 回來的？
+window.onload = function() {
     const urlParams = new URLSearchParams(window.location.search);
     const sid = urlParams.get('sid');
     const amount = urlParams.get('amount');
 
-    // 如果網址有 sid 和 amount，代表已經掃碼成功，直接跳過認證
+    // 如果網址有 sid，代表掃描成功跳轉過來了
     if (sid && amount) {
+        // 直接隱藏密碼框，顯示操作介面
         document.getElementById('admin-gate').style.display = 'none';
         document.getElementById('scanner-ui').style.display = 'block';
-        startCheckingUrl(); 
+        
+        // 執行儲值確認邏輯
+        if (confirm(`確認要為學號 ${sid} 儲值 $${amount} 嗎？`)) {
+            doTopup(sid, parseInt(amount));
+        } else {
+            window.location.href = "admin_scan.html"; // 取消則回乾淨頁面
+        }
     }
 };
 
@@ -62,32 +70,50 @@ function checkAdmin() {
     const currentUserID = localStorage.getItem('studentID'); 
     const inputPwd = document.getElementById('admin-pwd').value; 
 
-    if (!currentUserID) {
-        alert("請先登入！");
-        window.location.href = "index.html";
-        return;
+    if (inputPwd === "1234") { // 檢查你的密碼
+        db.collection("admins").doc(currentUserID).get().then(doc => {
+            if (doc.exists && doc.data().role === "admin") {
+                document.getElementById('admin-gate').style.display = 'none';
+                document.getElementById('scanner-ui').style.display = 'block';
+                startScanner(); 
+            } else {
+                alert("沒有管理員權限！");
+            }
+        });
+    } else {
+        alert("密碼錯誤！");
     }
+}
 
-    // 第一層：檢查數字密碼 (你設定的 1234)
-    if (inputPwd !== "1234") { 
-        alert("密碼錯誤！請重新輸入。");
-        return;
-    }
-
-    // 第二層：檢查 Firebase 資料庫權限
-    db.collection("admins").doc(currentUserID).get().then(doc => {
-        if (doc.exists && doc.data().role === "admin") {
-            // ✅ 驗證成功：顯示掃描器
-            document.getElementById('admin-gate').style.display = 'none';
-            document.getElementById('scanner-ui').style.display = 'block';
-            startCheckingUrl(); 
-        } else {
-            alert("驗證失敗：您的帳號不在管理員名單中！");
-            window.location.href = "home.html";
+function startScanner() {
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
+        (decodedText) => {
+            // 掃描後，將網址導向帶有參數的自己
+            if(decodedText.includes('admin_scan.html')) {
+                html5QrCode.stop();
+                window.location.href = decodedText; 
+            }
         }
-    }).catch(err => {
-        alert("權限驗證失敗：" + err.message);
-    });
+    );
+}
+
+function doTopup(sid, amount) {
+    const userRef = db.collection("users").doc(sid);
+    userRef.get().then(doc => {
+        if (doc.exists) {
+            const newBalance = (doc.data().balance || 0) + amount;
+            userRef.update({ balance: newBalance }).then(() => {
+                // ✅ 顯示成功畫面
+                document.getElementById('status').style.display = 'block';
+                document.getElementById('msg-title').innerText = "✅ 儲值成功！";
+                document.getElementById('msg-body').innerText = `學號：${sid}\n新餘額：$${newBalance}`;
+                document.getElementById('reader').style.display = 'none'; // 隱藏掃描器避免干擾
+            });
+        } else {
+            alert("找不到該學生資料！");
+        }
+    }).catch(err => alert("儲值失敗：" + err.message));
 }
 
     // 第二層：檢查 Firebase 資料庫權限
