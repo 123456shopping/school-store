@@ -5,10 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>註冊帳號 - 合作社線上系統</title>
-    <link rel="stylesheet" href="styles.css">
-
     <style>
-        /* 保持原本的 CSS 樣式 */
         body {
             display: flex;
             justify-content: center;
@@ -57,7 +54,7 @@
         .login-button {
             width: 100%;
             padding: 12px;
-            background-color: #28a745; /* 註冊用綠色區分 */
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 5px;
@@ -99,7 +96,7 @@
         </div>
         <div class="input-group">
             <label for="password">設定密碼</label>
-            <input type="password" id="password" placeholder="請設定密碼">
+            <input type="password" id="password" placeholder="請設定 6 位數以上密碼">
         </div>
 
         <button class="login-button" onclick="register()">立即註冊</button>
@@ -110,10 +107,11 @@
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // 2. Firebase 初始化 (請確保 apiKey 等資訊與 index.html 一致)
+        // Firebase 初始化
         var firebaseConfig = {
             apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
             authDomain: "xinnini1222.firebaseapp.com",
@@ -124,41 +122,51 @@
         };
 
         firebase.initializeApp(firebaseConfig);
+        var auth = firebase.auth();
         var db = firebase.firestore();
 
-        // 3. 註冊邏輯
         function register() {
             var name = document.getElementById('username').value;
             var id = document.getElementById('studentID').value;
             var mail = document.getElementById('email').value;
             var pw = document.getElementById('password').value;
 
-            // 檢查欄位是否空白
             if (name == "" || id == "" || mail == "" || pw == "") {
                 alert("所有欄位都必須填寫！");
                 return;
             }
 
-            // 先檢查學號是否已經被註冊過
+            if (pw.length < 6) {
+                alert("為了安全，密碼請設定至少 6 位數。");
+                return;
+            }
+
+            // 1. 先檢查學號是否在 Firestore 已被使用
             db.collection("users").doc(id).get().then(function(doc) {
                 if (doc.exists) {
                     alert("此學號已註冊過！");
                 } else {
-                    // 若沒被註冊過，則新增資料
-                    db.collection("users").doc(id).set({
-                        username: name,
-                        studentID: id,
-                        email: mail,
-                        password: pw,
-                        balance: 0, // 初始餘額給 0
-                        createdAt: new Date().toLocaleString() // 存入註冊時間
-                    }).then(function() {
-                        alert("註冊成功！請重新登入。");
-                        window.location.href = "index.html";
-                    }).catch(function(error) {
-                        alert("註冊失敗，請稍後再試。");
-                        console.error(error);
-                    });
+                    // 2. 在 Authentication 建立帳號
+                    auth.createUserWithEmailAndPassword(mail, pw)
+                        .then((userCredential) => {
+                            // 3. 帳號建立成功後，將詳細資料存入 Firestore
+                            return db.collection("users").doc(id).set({
+                                username: name,
+                                studentID: id,
+                                email: mail,
+                                balance: 0, 
+                                role: "student",
+                                createdAt: new Date().toLocaleString()
+                            });
+                        })
+                        .then(function() {
+                            alert("註冊成功！資料已同步至驗證系統。");
+                            window.location.href = "index.html";
+                        })
+                        .catch(function(error) {
+                            alert("註冊失敗：" + error.message);
+                            console.error(error);
+                        });
                 }
             });
         }
