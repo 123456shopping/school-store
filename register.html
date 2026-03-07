@@ -111,7 +111,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // Firebase 初始化
+        // 2. Firebase 初始化
         var firebaseConfig = {
             apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
             authDomain: "xinnini1222.firebaseapp.com",
@@ -122,7 +122,7 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        var auth = firebase.auth();
+        var auth = firebase.auth(); // ✅ 初始化 Auth
         var db = firebase.firestore();
 
         function register() {
@@ -141,15 +141,16 @@
                 return;
             }
 
-            // 1. 先檢查學號是否在 Firestore 已被使用
+            // A. 先檢查學號是否在 Firestore 已被使用
             db.collection("users").doc(id).get().then(function(doc) {
                 if (doc.exists) {
                     alert("此學號已註冊過！");
                 } else {
-                    // 2. 在 Authentication 建立帳號
+                    // B. 先在 Authentication 建立帳號 (這行會讓資料進 Authentication Users 列表)
                     auth.createUserWithEmailAndPassword(mail, pw)
                         .then((userCredential) => {
-                            // 3. 帳號建立成功後，將詳細資料存入 Firestore
+                            // C. 帳號建立成功後，才將詳細資料存入 Firestore
+                            // 注意：這裡不再存入 password 欄位，由 Firebase Auth 安全管理
                             return db.collection("users").doc(id).set({
                                 username: name,
                                 studentID: id,
@@ -168,6 +169,8 @@
                             console.error(error);
                         });
                 }
+            }).catch(function(error) {
+                alert("檢查學號時出錯：" + error.message);
             });
         }
     </script>
