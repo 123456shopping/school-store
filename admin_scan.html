@@ -3,66 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>合作社管理員 - 掃描系統</title>
+    <title>合作社管理員 - 認證系統</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
         body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f4; }
-        #reader { width: 100%; max-width: 400px; margin: auto; background: white; }
-        .result-box { background: white; padding: 20px; border-radius: 10px; margin-top: 20px; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #reader { width: 100%; max-width: 400px; margin: auto; background: white; border: 2px solid #333; }
+        .result-box { background: white; padding: 20px; border-radius: 10px; margin-top: 20px; display: none; }
         .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h2>管理員儲值系統</h2>
-    
-    <div id="reader"></div>
+    <div id="admin-gate">
+        <h2>管理員認證</h2>
+        <p>請輸入管理員專屬密碼以開啟掃描功能：</p>
+        <input type="password" id="admin-pwd" style="padding: 10px; font-size: 16px;">
+        <button class="btn" onclick="checkAdmin()">進入系統</button>
+    </div>
 
-    <div id="status" class="result-box">
-        <h3 id="msg-title">處理中...</h3>
-        <p id="msg-body"></p>
-        <button class="btn" onclick="location.href='admin_scan.html'">掃描下一個</button>
+    <div id="scanner-ui" style="display: none;">
+        <h2>合作社管理端 - 掃描中</h2>
+        <div id="reader"></div>
+        <div id="status" class="result-box">
+            <h3 id="msg-title">處理中...</h3>
+            <p id="msg-body"></p>
+            <button class="btn" onclick="location.href='admin_scan.html'">下一個</button>
+        </div>
     </div>
 
     <script>
-        // 1. Firebase 配置 (請確保與你其他頁面的一致)
+        // 1. Firebase 配置 (請確保與你 topup.html 的一致)
         const firebaseConfig = {
-            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
-            authDomain: "xinnini1222.firebaseapp.com",
+            apiKey: "AIzaSy...",
             projectId: "xinnini1222",
-            storageBucket: "xinnini1222.firebasestorage.app",
-            messagingSenderId: "829700121475",
-            appId: "1:829700121475:web:baf568b0060bf93ede8cb6"
+          storageBucket: "xinnini1222.firebasestorage.app",
+            messagingSenderId: "1071285094200",
+            appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 2. 頁面啟動檢查：看網址有沒有帶資料 (?sid=xxx&amount=xxx)
-        window.onload = function() {
+        // 2. 密碼檢查功能 (你可以把 8888 改成你想要的數字)
+       window.onload = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sid = urlParams.get('sid');
+    const amount = urlParams.get('amount');
+
+    // 如果網址有 sid 和 amount，代表已經掃碼成功，直接跳過認證
+    if (sid && amount) {
+        document.getElementById('admin-gate').style.display = 'none';
+        document.getElementById('scanner-ui').style.display = 'block';
+        startCheckingUrl(); 
+    }
+};
+
+function checkAdmin() {
+    const currentUserID = localStorage.getItem('studentID'); 
+    const inputPwd = document.getElementById('admin-pwd').value; 
+
+    if (!currentUserID) {
+        alert("請先登入！");
+        window.location.href = "index.html";
+        return;
+    }
+
+    // 第一層：檢查數字密碼 (你設定的 1234)
+    if (inputPwd !== "1234") { 
+        alert("密碼錯誤！請重新輸入。");
+        return;
+    }
+
+    // 第二層：檢查 Firebase 資料庫權限
+    db.collection("admins").doc(currentUserID).get().then(doc => {
+        if (doc.exists && doc.data().role === "admin") {
+            // ✅ 驗證成功：顯示掃描器
+            document.getElementById('admin-gate').style.display = 'none';
+            document.getElementById('scanner-ui').style.display = 'block';
+            startCheckingUrl(); 
+        } else {
+            alert("驗證失敗：您的帳號不在管理員名單中！");
+            window.location.href = "home.html";
+        }
+    }).catch(err => {
+        alert("權限驗證失敗：" + err.message);
+    });
+}
+
+    // 第二層：檢查 Firebase 資料庫權限
+   function checkAdmin() {
+    const currentUserID = localStorage.getItem('studentID'); 
+    const inputPwd = document.getElementById('admin-pwd').value; 
+
+    if (!currentUserID) {
+        alert("請先登入！");
+        window.location.href = "index.html";
+        return;
+    }
+
+    // 第一層：檢查數字密碼 (你設定的 1234)
+    if (inputPwd !== "1234") { 
+        alert("密碼錯誤！請重新輸入。");
+        return;
+    }
+
+    // 第二層：檢查 Firebase 資料庫權限
+    db.collection("admins").doc(currentUserID).get().then(doc => {
+        if (doc.exists && doc.data().role === "admin") {
+            // ✅ 驗證成功：顯示掃描器
+            document.getElementById('admin-gate').style.display = 'none';
+            document.getElementById('scanner-ui').style.display = 'block';
+            startCheckingUrl(); 
+        } else {
+            alert("驗證失敗：您的帳號不在管理員名單中！");
+            window.location.href = "home.html";
+        }
+    }).catch(err => {
+        alert("權限驗證失敗：" + err.message);
+    });
+}
+        function startCheckingUrl() {
             const urlParams = new URLSearchParams(window.location.search);
             const sid = urlParams.get('sid');
             const amount = parseInt(urlParams.get('amount'));
 
             if (sid && amount) {
-                // 如果是相機掃描後點進來的
-                document.getElementById('status').style.display = 'block';
-                if (confirm(`確認為學號 ${sid} 儲值 $${amount} 嗎？`)) {
+                if (confirm(`確認要為學號 ${sid} 儲值 $${amount} 嗎？`)) {
                     doTopup(sid, amount);
                 } else {
                     location.href = "admin_scan.html";
                 }
             } else {
-                // 如果是直接打開，啟動相機
                 startScanner();
             }
-        };
+        }
 
         function startScanner() {
             const html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
                 (decodedText) => {
-                    // 如果掃到的是網址，直接跳轉去該網址執行
                     if(decodedText.includes('admin_scan.html')) {
                         html5QrCode.stop();
                         window.location.href = decodedText;
@@ -77,17 +156,10 @@
                 if (doc.exists) {
                     const newBalance = (doc.data().balance || 0) + amount;
                     userRef.update({ balance: newBalance }).then(() => {
-                        db.collection("orders").add({
-                            studentID: sid,
-                            type: "儲值",
-                            amount: amount,
-                            timestamp: new Date().toLocaleString()
-                        });
+                        document.getElementById('status').style.display = 'block';
                         document.getElementById('msg-title').innerText = "✅ 儲值成功！";
-                        document.getElementById('msg-body').innerText = `學號：${sid}\n存入：$${amount}\n目前餘額：$${newBalance}`;
+                        document.getElementById('msg-body').innerText = `學號：${sid}\n新餘額：$${newBalance}`;
                     });
-                } else {
-                    alert("錯誤：找不到該學生帳號！");
                 }
             });
         }
