@@ -111,7 +111,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // 2. Firebase 初始化
+        // 2. Firebase 初始化配置
         var firebaseConfig = {
             apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
             authDomain: "xinnini1222.firebaseapp.com",
@@ -122,9 +122,10 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        var auth = firebase.auth(); // ✅ 初始化 Auth
+        var auth = firebase.auth(); // 初始化驗證功能
         var db = firebase.firestore();
 
+        // 3. 整合型註冊功能
         function register() {
             var name = document.getElementById('username').value;
             var id = document.getElementById('studentID').value;
@@ -136,21 +137,22 @@
                 return;
             }
 
+            // Firebase 規定密碼至少 6 位數
             if (pw.length < 6) {
                 alert("為了安全，密碼請設定至少 6 位數。");
                 return;
             }
 
-            // A. 先檢查學號是否在 Firestore 已被使用
+            // A. 先檢查學號是否已在資料庫中
             db.collection("users").doc(id).get().then(function(doc) {
                 if (doc.exists) {
                     alert("此學號已註冊過！");
                 } else {
-                    // B. 先在 Authentication 建立帳號 (這行會讓資料進 Authentication Users 列表)
+                    // B. 在 Authentication 建立帳號
                     auth.createUserWithEmailAndPassword(mail, pw)
                         .then((userCredential) => {
-                            // C. 帳號建立成功後，才將詳細資料存入 Firestore
-                            // 注意：這裡不再存入 password 欄位，由 Firebase Auth 安全管理
+                            // C. 帳號建立成功後，才存入詳細資料到 Firestore
+                            // 注意：不存入 password 欄位以保安全
                             return db.collection("users").doc(id).set({
                                 username: name,
                                 studentID: id,
@@ -161,7 +163,7 @@
                             });
                         })
                         .then(function() {
-                            alert("註冊成功！資料已同步至驗證系統。");
+                            alert("註冊成功！帳號已同步。");
                             window.location.href = "index.html";
                         })
                         .catch(function(error) {
@@ -170,7 +172,7 @@
                         });
                 }
             }).catch(function(error) {
-                alert("檢查學號時出錯：" + error.message);
+                alert("系統檢查錯誤：" + error.message);
             });
         }
     </script>

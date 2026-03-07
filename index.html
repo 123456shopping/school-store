@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="styles.css">
     
     <style>
-        /* 保持你原本的 CSS 樣式不變 */
         body {
             display: flex;
             justify-content: center;
@@ -59,10 +58,11 @@
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // 2. Firebase 初始化設定 (保持你的設定不變)
+        // 2. Firebase 初始化
         var firebaseConfig = {
             apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
             authDomain: "xinnini1222.firebaseapp.com",
@@ -73,41 +73,39 @@
         };
         
         firebase.initializeApp(firebaseConfig);
+        var auth = firebase.auth();
         var db = firebase.firestore();
 
-        // 3. 登入邏輯 (改寫為高二基礎語法)
+        // 3. 修正後的登入邏輯
         function login() {
-            // 取得輸入框的值
             var studentID = document.getElementById('loginStudentID').value;
             var password = document.getElementById('loginPassword').value;
 
-            // 基本檢查
             if (studentID == "" || password == "") {
                 alert("請填寫學號與密碼！");
                 return;
             }
 
-            // 查詢資料庫 (使用傳統的 .get() 與 .then())
+            // A. 先去資料庫查詢這個學號對應的 Email (因為 Authentication 需要 Email 登入)
             db.collection("users").doc(studentID).get().then(function(doc) {
                 if (doc.exists) {
-                    var userData = doc.data();
-                    
-                    // 比對密碼
-                    if (userData.password == password) {
-                        alert("登入成功！");
-                        // 存入學號，方便其他頁面使用
-                        localStorage.setItem('studentID', studentID);
-                        // 跳轉到首頁
-                        window.location.href = "home.html";
-                    } else {
-                        alert("密碼錯誤，請再試一次。");
-                    }
+                    var email = doc.data().email;
+
+                    // B. 使用 Firebase Auth 進行安全登入
+                    auth.signInWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            alert("登入成功！");
+                            localStorage.setItem('studentID', studentID);
+                            window.location.href = "home.html";
+                        })
+                        .catch((error) => {
+                            alert("密碼錯誤，請再試一次。");
+                        });
                 } else {
                     alert("找不到此學號，請確認是否已註冊。");
                 }
             }).catch(function(error) {
-                console.error("發生錯誤：", error);
-                alert("登入時發生錯誤，請檢查網路。");
+                alert("系統錯誤：" + error.message);
             });
         }
     </script>
