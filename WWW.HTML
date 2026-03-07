@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+   <!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>商品資料庫管理介面</title>
+    <style>
+        /* 繼承您 header 的樣式 */
+        
+        /* 1. 調整主內容區域的佈局為三欄 */
+        .db-interface {
+            display: flex;
+            min-height: 80vh; /* 確保內容區夠高 */
+            background-color: white; /* 模擬 Firebase Console 的白色背景 */
+            border: 1px solid #e0e0e0; /* 輕微邊框 */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            margin: 20px auto;
+            max-width: 1200px; /* 寬度略大於 main 的 1100px */
+        }
+
+        /* 2. 左側導航 (集合列表) */
+        .sidebar {
+            width: 250px;
+            background-color: #f8f9fa; /* 淺灰色，像 Firebase 側邊欄 */
+            padding: 15px 0;
+            border-right: 1px solid #e0e0e0;
+            flex-shrink: 0; /* 不讓它被壓縮 */
+        }
+        .sidebar h3 {
+            margin: 0 15px 10px;
+            color: #6c757d;
+            font-size: 0.9em;
+            font-weight: normal;
+        }
+        .collection-item {
+            padding: 8px 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+        .collection-item:hover, .collection-item.active {
+            background-color: #e9ecef; /* 滑鼠懸停或選中時的底色 */
+        }
+        .collection-item.active {
+             border-left: 3px solid #007bff; /* 模擬選中藍色邊條 */
+        }
+
+
+        /* 3. 中間列表 (文件列表) */
+        .document-list {
+            width: 300px;
+            padding: 15px 0;
+            border-right: 1px solid #e0e0e0;
+            flex-shrink: 0;
+            overflow-y: auto; /* 允許滾動 */
+        }
+        .doc-item {
+            padding: 8px 15px;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: background-color 0.1s;
+            color: #495057;
+        }
+        .doc-item:hover, .doc-item.active {
+            background-color: #f0f0f0;
+        }
+
+        /* 4. 右側詳細資訊 (文件內容) */
+        .document-details {
+            flex-grow: 1; /* 佔據剩餘所有空間 */
+            padding: 15px 20px;
+            overflow-y: auto;
+        }
+        .detail-item {
+            margin-bottom: 10px;
+            border-bottom: 1px dotted #ddd;
+            padding-bottom: 5px;
+        }
+        .detail-item span {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .details-title {
+            font-size: 1.2em;
+            color: #343a40;
+            margin-bottom: 20px;
+        }
+        
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>合作社線上系統 - 資料庫管理</h1>
+        <nav>
+            <ul>
+                <li><a href="home.html">首頁</a></li>
+                <li><a href="products_list.html">商品資料庫</a></li>
+                <li><a href="index.html">登出</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="db-interface">
+            <div class="sidebar">
+                <h3>集合 (Collections)</h3>
+                <div class="collection-item active" data-collection="products">🛒 products</div>
+                <div class="collection-item" data-collection="students">🧑‍🎓 students</div>
+            </div>
+
+            <div class="document-list">
+                <h3>文件 (Documents)</h3>
+                <p id="loading-doc-list" style="padding: 10px;">載入中...</p>
+                <div id="products-list-container">
+                    </div>
+            </div>
+
+            <div class="document-details">
+                <p class="details-title">文件詳細資訊</p>
+                <div id="product-details-container">
+                    <p style="color: #6c757d;">請從左側列表中選擇一個商品文件。</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 合作社線上系統。</p>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        // ⚠️ 您的 Firebase 專案配置 (使用您 index.html 中的配置)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
+            authDomain: "xinnini1222.firebaseapp.com",
+            projectId: "xinnini1222",
+            storageBucket: "xinnini1222.firebasestorage.app",
+            messagingSenderId: "829700121475",
+            appId: "1:829700121475:web:baf568b0060bf93ede8cb6",
+            measurementId: "G-MCM390KX11"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const listContainer = document.getElementById('products-list-container');
+        const detailsContainer = document.getElementById('product-details-container');
+        const loadingMessage = document.getElementById('loading-doc-list');
+        let currentProducts = []; // 儲存目前載入的所有商品資料
+
+        /**
+         * 讀取並顯示 'products' 集合的文件列表
+         */
+        function loadProductList() {
+            loadingMessage.style.display = 'block';
+            listContainer.innerHTML = ''; // 清空舊列表
+            currentProducts = [];
+
+            db.collection("products").get()
+                .then((querySnapshot) => {
+                    loadingMessage.style.display = 'none';
+                    if (querySnapshot.empty) {
+                        listContainer.innerHTML = '<p style="padding: 10px; color: red;">⚠️ 集合中沒有文件！</p>';
+                        return;
+                    }
+
+                    querySnapshot.forEach((doc) => {
+                        const product = { id: doc.id, ...doc.data() };
+                        currentProducts.push(product); // 儲存資料
+                        
+                        // 創建文件項目元素
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'doc-item';
+                        itemDiv.textContent = `📄 ${doc.id}`; // 顯示文件 ID
+                        itemDiv.dataset.id = doc.id; // 儲存文件 ID
+
+                        // 設置點擊事件，顯示詳細資訊
+                        itemDiv.addEventListener('click', () => {
+                            displayProductDetails(product.id, itemDiv);
+                        });
+
+                        listContainer.appendChild(itemDiv);
+                    });
+                })
+                .catch((error) => {
+                    console.error("讀取商品清單時發生錯誤:", error);
+                    loadingMessage.style.display = 'none';
+                    listContainer.innerHTML = '<p style="padding: 10px; color: red;">讀取失敗。</p>';
+                });
+        }
+
+        /**
+         * 顯示單一商品的詳細資訊
+         * @param {string} docId - 文件 ID
+         * @param {HTMLElement} clickedItem - 被點擊的 DOM 元素
+         */
+        function displayProductDetails(docId, clickedItem) {
+            // 移除所有文件項目的 active 樣式
+            document.querySelectorAll('.doc-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            // 為當前點擊的項目添加 active 樣式
+            clickedItem.classList.add('active');
+
+            // 從已載入的陣列中找到該商品
+            const product = currentProducts.find(p => p.id === docId);
+
+            if (!product) {
+                detailsContainer.innerHTML = '<p style="color: red;">找不到該文件資料。</p>';
+                return;
+            }
+            
+            // 構建詳細資訊 HTML
+            let htmlContent = `<p class="details-title">商品 ID：${product.id}</p>`;
+
+            // 遍歷商品物件的所有屬性 (欄位)
+            for (const key in product) {
+                if (key !== 'id') { // 不重複顯示 id
+                    let value = product[key];
+
+                    // 簡單處理時間戳（如果有的話）
+                    if (value && typeof value === 'object' && value.seconds) {
+                        value = new Date(value.seconds * 1000).toLocaleString();
+                    }
+                    
+                    htmlContent += `
+                        <div class="detail-item">
+                            <span>${key}:</span> ${value}
+                        </div>
+                    `;
+                }
+            }
+
+            detailsContainer.innerHTML = htmlContent;
+        }
+
+        // 頁面載入時，自動執行載入商品列表
+        loadProductList();
+    </script>
+
+</body>
+
+</html>
+</body>
+</html>

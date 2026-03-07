@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>合作社線上系統 - 首頁</title>
+</head>
+
+<body>
+
+    <header>
+        <h1>合作社線上系統</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">切換帳號</a></li>
+                <li><a href="snacks.html">零食</a></li>
+                <li><a href="contact.html">文具</a></li>
+                <li><a href="drink.html">飲料</a></li>
+                <li><a href="ice.html">冰品</a></li>
+                <li><a href="desert.html">甜點</a></li>
+                <li><a href="topup.html">儲值</a></li>
+                <li><a href="cart.html">購物車</a></li>
+                <li><a href="history.html">交易紀錄</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero">
+            <h2>歡迎來到首頁！</h2>
+            <div style="background: white; padding: 20px; border-radius: 10px; display: inline-block; margin-top: 20px; border: 1px solid #ddd;">
+                <p style="font-size: 1.2em;">目前登入學號：<span id="display-studentID" style="color: #007bff; font-weight: bold;">讀取中...</span></p>
+                <p style="font-size: 1.5em;">我的帳戶餘額：<span id="display-balance" style="color: #28a745; font-weight: bold;">$0</span></p>
+            </div>
+        </section>
+
+        <section id="features">
+            <h2>功能專區</h2>
+            <div onclick="window.location.href='snacks.html'" style="cursor:pointer;">
+                <h3>開始購物</h3>
+                <p>前往商品分類挑選喜愛的零食與文具。</p>
+            </div>
+            <div onclick="window.location.href='topup.html'" style="cursor:pointer;">
+                <h3>帳戶儲值</h3>
+                <p>餘額不足嗎？點擊這裡進行模擬儲值。</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        // 2. Firebase 初始化設定 (與 index.html 一致)
+        var firebaseConfig = {
+            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
+            authDomain: "xinnini1222.firebaseapp.com",
+            projectId: "xinnini1222",
+            storageBucket: "xinnini1222.firebasestorage.app",
+            messagingSenderId: "1071285094200",
+            appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        var db = firebase.firestore();
+
+        // 3. 頁面載入時要執行的動作
+        window.onload = function() {
+            // 從瀏覽器暫存拿學號
+            var studentID = localStorage.getItem('studentID');
+
+            if (studentID) {
+                // 顯示學號
+                document.getElementById('display-studentID').innerText = studentID;
+
+                // 去資料庫抓這個學號的餘額 (使用傳統 get 寫法)
+                db.collection("users").doc(studentID).get().then(function(doc) {
+                    if (doc.exists) {
+                        var userData = doc.data();
+                        // 顯示餘額，如果沒設定餘額就顯示 0
+                        document.getElementById('display-balance').innerText = "$" + (userData.balance || 0);
+                    } else {
+                        alert("找不到使用者資料，請重新登入");
+                        window.location.href = "index.html";
+                    }
+                }).catch(function(error) {
+                    console.log("讀取資料失敗:", error);
+                });
+            } else {
+                // 如果沒登入過，踢回登入頁
+                alert("請先登入系統！");
+                window.location.href = "index.html";
+            }
+        };
+    </script>
+</body>
+</html>

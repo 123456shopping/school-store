@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>忘記密碼</title>
+    <style>
+        /* 1. 基礎重置與佈局 */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #e9ecef;
+            font-family: Arial, sans-serif, "Microsoft JhengHei", "微軟正黑體";
+            color: #333;
+        }
+
+        /* 2. 容器樣式 (沿用 index.html 的 .login-container) */
+        .login-container { 
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-container h2 {
+            margin-bottom: 30px;
+            color: #007bff;
+            font-size: 1.8em;
+        }
+
+        /* 3. 輸入欄位樣式 */
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .input-group input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        /* 4. 重設按鈕樣式 */
+        .reset-button { 
+            width: 100%;
+            padding: 12px;
+            background-color: #ffc107; /* 警告色 (黃色/橘色) 來表示重設 */
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+
+        .reset-button:hover {
+            background-color: #e0a800;
+        }
+
+        /* 5. 底部連結樣式 */
+        .links {
+            margin-top: 25px;
+        }
+
+        .links a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 0.9em;
+            margin: 0 10px;
+            transition: color 0.3s;
+        }
+
+        .links a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <h2>忘記密碼？</h2>
+        <p style="color: #6c757d; margin-bottom: 25px;">請輸入您的學號，以便我們提供重設密碼的指示。</p>
+        
+        <form action="#" method="post" class="reset-form">
+            
+            <div class="input-group">
+                <label for="studentID">電子郵件</label>
+                <input type="text" id="studentID" name="studentID" placeholder="請輸入您的電子郵件" required>
+            </div>
+            
+            <button type="submit" class="reset-button">確認學號</button>
+            
+            <div class="links">
+                <a href="index.html">返回登入頁面</a>
+                <a href="register.html">註冊新帳號</a> 
+            </div>
+        </form>
+    </div>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <script>
+        // ⚠️ 您的 Firebase 專案配置 (不變)
+        const firebaseConfig = {
+            // ... 您的配置內容 ...
+            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
+            authDomain: "xinnini1222.firebaseapp.com",
+            projectId: "xinnini1222",
+            storageBucket: "xinnini1222.firebasestorage.app",
+            messagingSenderId: "829700121475",
+            appId: "1:829700121475:web:baf568b0060bf93ede8cb6",
+            measurementId: "G-MCM390KX11"
+        };
+        firebase.initializeApp(firebaseConfig);
+        
+        // 初始化 Firebase Authentication 服務
+        const auth = firebase.auth(); 
+
+        /**
+         * 處理密碼重設流程 (使用 Firebase Authentication)
+         */
+        function handlePasswordReset(event) {
+            event.preventDefault();
+
+            // ⚠️ 這裡的輸入框必須是電子郵件，而不是學號
+            const email = document.getElementById('studentID').value; 
+            
+            document.querySelector('.reset-button').textContent = '發送中...';
+            document.querySelector('.reset-button').disabled = true;
+            
+            // 使用 Firebase Auth 內建的密碼重設郵件發送功能
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    // 發送成功
+                    alert(`密碼重設郵件已發送到 ${email}！請檢查您的收件箱。`);
+                    window.location.href = "index.html"; // 導回登入頁面
+                })
+                .catch((error) => {
+                    // 發送失敗 (可能是郵件格式錯誤或該郵件未註冊)
+                    let errorMessage = '發送失敗，請稍後再試。';
+                    if (error.code === 'auth/invalid-email') {
+                        errorMessage = '電子郵件地址格式錯誤。';
+                    } else if (error.code === 'auth/user-not-found') {
+                        errorMessage = '查無此電子郵件的帳戶，請確認輸入是否正確。';
+                    }
+                    console.error("發送密碼重設郵件錯誤:", error);
+                    alert(errorMessage);
+                })
+                .finally(() => {
+                    document.querySelector('.reset-button').textContent = '確認電子郵件';
+                    document.querySelector('.reset-button').disabled = false;
+                });
+        }
+
+        // 將上面的 function 掛載到表單提交事件上
+        document.querySelector('.reset-form').addEventListener('submit', handlePasswordReset);
+
+    </script>
+</body>
+</html>

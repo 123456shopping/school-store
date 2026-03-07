@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>我的購物車 - 合作社線上系統</title>
+    <style>
+        /* 保持原本的 CSS 樣式 */
+        .cart-item {
+            border-bottom: 1px solid #ddd;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        #cart-container { max-width: 800px; margin: 20px auto; padding: 20px; }
+        .checkout-section { text-align: right; margin-top: 20px; padding: 20px; background: #fff; border-radius: 8px; }
+        .remove-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>我的購物車</h1>
+        <nav>
+            <ul>
+                <li><a href="home.html">回首頁</a></li>
+                <li><a href="history.html">交易紀錄</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main id="cart-container">
+        <div id="cart-list">
+            </div>
+
+        <div class="checkout-section">
+            <h3>總金額：$<span id="total-price">0</span></h3>
+            <button id="checkoutBtn" onclick="handleCheckout()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">確認結帳</button>
+            <button onclick="clearCart()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">清空購物車</button>
+        </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        // 2. Firebase 初始化
+        var firebaseConfig = {
+            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
+            authDomain: "xinnini1222.firebaseapp.com",
+            projectId: "xinnini1222",
+            storageBucket: "xinnini1222.firebasestorage.app",
+            messagingSenderId: "1071285094200",
+            appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
+        };
+        firebase.initializeApp(firebaseConfig);
+        var db = firebase.firestore();
+
+        // 3. 顯示購物車內容
+        function renderCart() {
+            var cart = JSON.parse(localStorage.getItem('cart')) || [];
+            var cartList = document.getElementById('cart-list');
+            var totalPriceDisplay = document.getElementById('total-price');
+            var total = 0;
+
+            cartList.innerHTML = ""; // 先清空
+
+            if (cart.length == 0) {
+                cartList.innerHTML = "<p>購物車是空的，快去逛逛吧！</p>";
+                totalPriceDisplay.innerText = "0";
+                return;
+            }
+
+            // 使用傳統 for 迴圈遍歷購物車
+            for (var i = 0; i < cart.length; i++) {
+                var item = cart[i];
+                var itemTotal = item.price * item.quantity;
+                total += itemTotal;
+
+                var itemHtml = '<div class="cart-item">';
+                itemHtml += '<div><strong>' + item.name + '</strong><br>價格: $' + item.price + ' x ' + item.quantity + '</div>';
+                itemHtml += '<button class="remove-btn" onclick="removeItem(' + i + ')">刪除</button>';
+                itemHtml += '</div>';
+                
+                cartList.innerHTML += itemHtml;
+            }
+
+            totalPriceDisplay.innerText = total;
+        }
+
+        // 4. 結帳邏輯 (高二學生思維：一步一步做)
+        function handleCheckout() {
+            var studentID = localStorage.getItem('studentID');
+            var cart = JSON.parse(localStorage.getItem('cart')) || [];
+            var total = parseInt(document.getElementById('total-price').innerText);
+
+            if (!studentID) {
+                alert("請先登入！");
+                window.location.href = "index.html";
+                return;
+            }
+            if (cart.length == 0) {
+                alert("購物車是空的！");
+                return;
+            }
+
+            // 第一步：先檢查餘額
+            db.collection("users").doc(studentID).get().then(function(doc) {
+                if (doc.exists) {
+                    var userData = doc.data();
+                    var currentBalance = userData.balance || 0;
+
+                    if (currentBalance < total) {
+                        alert("餘額不足！你還差 $" + (total - currentBalance));
+                    } else {
+                        // 第二步：扣錢
+                        db.collection("users").doc(studentID).update({
+                            balance: currentBalance - total
+                        }).then(function() {
+                            // 第三步：存入訂單紀錄
+                            db.collection("orders").add({
+                                studentID: studentID,
+                                items: cart,
+                                totalPrice: total,
+                                timestamp: new Date().toLocaleString()
+                            }).then(function() {
+                                alert("結帳成功！");
+                                localStorage.removeItem('cart'); // 清空購物車
+                                window.location.href = "history.html";
+                            });
+                        });
+                    }
+                }
+            });
+        }
+
+        function removeItem(index) {
+            var cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart.splice(index, 1); // 刪除該項
+            localStorage.setItem('cart', JSON.stringify(cart));
+            renderCart();
+        }
+
+        function clearCart() {
+            if (confirm("確定要清空嗎？")) {
+                localStorage.removeItem('cart');
+                renderCart();
+            }
+        }
+
+        // 頁面載入後立即顯示
+        window.onload = renderCart;
+    </script>
+</body>
+</html>

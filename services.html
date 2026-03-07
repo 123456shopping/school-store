@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>服務項目 - 合作社線上系統</title>
+</head>
+
+<body>
+
+    <header>
+        <h1>合作社線上系統</h1>
+        <nav>
+            <ul>
+                <li><a href="home.html">回首頁</a></li>
+                <li><a href="snacks.html">零食</a></li>
+                <li><a href="contact.html">文具</a></li>
+                <li><a href="drink.html">飲料</a></li>
+                <li><a href="ice.html">冰品</a></li>
+                <li><a href="desert.html">甜點</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero">
+            <h2>服務項目展示</h2>
+            <p>這裡陳列了所有合作社提供的精選商品。</p>
+        </section>
+
+        <section id="snacks-list">
+            <h2>所有商品</h2>
+            <div id="product-container" style="display: flex; flex-wrap: wrap; gap: 20px;">
+                </div>
+            <p id="loading-message">正在載入商品清單...</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 合作社線上系統。版權所有。</p>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        // 2. Firebase 初始化設定
+        var firebaseConfig = {
+            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
+            authDomain: "xinnini1222.firebaseapp.com",
+            projectId: "xinnini1222",
+            storageBucket: "xinnini1222.firebasestorage.app",
+            messagingSenderId: "1071285094200",
+            appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        var db = firebase.firestore();
+
+        // 3. 載入商品清單的函式
+        function loadSnackList() {
+            var productContainer = document.getElementById('product-container');
+            var loadingMessage = document.getElementById('loading-message');
+
+            // 抓取所有商品 (不限分類，或是你可以自己加上 .where 指定分類)
+            db.collection("products")
+                .get()
+                .then(function(querySnapshot) {
+                    loadingMessage.style.display = 'none'; // 隱藏載入中文字
+                    
+                    var allHtml = ""; // 用來暫存所有的 HTML 字串
+
+                    // 使用傳統的 forEach 遍歷每一筆商品資料
+                    querySnapshot.forEach(function(doc) {
+                        var product = doc.data();
+                        
+                        // 使用 + 號進行字串拼接，這是高二最基礎的寫法
+                        var itemHtml = '<div style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; min-width: 200px; background: white;">';
+                        itemHtml += '<h3>' + product.name + '</h3>';
+                        itemHtml += '<p>價格: $' + product.price + '</p>';
+                        itemHtml += '<p style="font-size:0.8em; color: #6c757d;">商品編號: ' + doc.id + '</p>';
+                        itemHtml += '</div>';
+                        
+                        allHtml += itemHtml; // 累加到總字串中
+                    });
+
+                    // 最後一次性把字串塞進容器裡
+                    productContainer.innerHTML = allHtml;
+                })
+                .catch(function(error) {
+                    console.error("讀取失敗:", error);
+                    loadingMessage.innerText = "載入失敗，請檢查網路。";
+                });
+        }
+
+        // 4. 當網頁完全載入後執行
+        window.onload = loadSnackList;
+    </script>
+
+</body>
+</html>

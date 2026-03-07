@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>帳戶儲值 - 學生端</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        .topup-container { background: white; padding: 30px; border-radius: 10px; text-align: center; max-width: 400px; margin: 50px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .amount-btn { padding: 10px 20px; margin: 5px; cursor: pointer; border: 1px solid #007bff; background: white; border-radius: 5px; }
+        .amount-btn:hover { background: #007bff; color: white; }
+        #qrcode { margin-top: 20px; display: flex; justify-content: center; }
+        #qr-hint { color: #666; font-size: 0.9em; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="topup-container">
+        <h2>選擇儲值金額</h2>
+        <p>您的學號：<span id="display-sid">載入中...</span></p>
+        <div class="amount-buttons">
+            <button class="amount-btn" onclick="generateQR(50)">$50</button>
+            <button class="amount-btn" onclick="generateQR(100)">$100</button>
+            <button class="amount-btn" onclick="generateQR(500)">$500</button>
+        </div>
+        <div id="qrcode"></div>
+        <p id="qr-hint">請向合作社管理員出示此碼掃描</p>
+        <br>
+        <a href="home.html">回首頁</a>
+    </div>
+
+    <script>
+        const studentID = localStorage.getItem('studentID');
+        if (!studentID) {
+            alert("請先登入！");
+            window.location.href = "index.html";
+        }
+        document.getElementById('display-sid').innerText = studentID;
+
+        function generateQR(amount) {
+            const qrContainer = document.getElementById("qrcode");
+            qrContainer.innerHTML = ""; // 清除舊圖
+            document.getElementById("qr-hint").style.display = "block";
+
+            // 獲取當前網址路徑，並導向管理員頁面
+            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+            
+            // 這裡就是方案二的關鍵：QR Code 內容是網址
+            const qrUrl = `${baseUrl}/admin_scan.html?sid=${studentID}&amount=${amount}&t=${new Date().getTime()}`;
+
+            new QRCode(qrContainer, {
+                text: qrUrl,
+                width: 200,
+                height: 200,
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+    </script>
+</body>
+</html>

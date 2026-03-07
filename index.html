@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生登入 - 合作社線上系統</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        /* 保持你原本的 CSS 樣式不變 */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #e9ecef;
+            font-family: Arial, sans-serif, "Microsoft JhengHei", "微軟正黑體";
+        }
+        .login-container { 
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .login-container h2 { margin-bottom: 30px; color: #007bff; font-size: 1.8em; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: bold; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .login-button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 5px; font-size: 1.1em; cursor: pointer; transition: background 0.3s; }
+        .login-button:hover { background-color: #0056b3; }
+        .footer-links { margin-top: 20px; font-size: 0.9em; }
+        .footer-links a { color: #007bff; text-decoration: none; margin: 0 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>學生登入</h2>
+        <div class="input-group">
+            <label for="loginStudentID">學號</label>
+            <input type="text" id="loginStudentID" placeholder="請輸入學號">
+        </div>
+        <div class="input-group">
+            <label for="loginPassword">密碼</label>
+            <input type="password" id="loginPassword" placeholder="請輸入密碼">
+        </div>
+        
+        <button class="login-button" onclick="login()">登入系統</button>
+
+        <div class="footer-links">
+            <a href="forgot.html">忘記密碼？</a>
+            <span>|</span>
+            <a href="register.html">註冊帳號</a>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        // 2. Firebase 初始化設定 (保持你的設定不變)
+        var firebaseConfig = {
+            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
+            authDomain: "xinnini1222.firebaseapp.com",
+            projectId: "xinnini1222",
+            storageBucket: "xinnini1222.firebasestorage.app",
+            messagingSenderId: "1071285094200",
+            appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        var db = firebase.firestore();
+
+        // 3. 登入邏輯 (改寫為高二基礎語法)
+        function login() {
+            // 取得輸入框的值
+            var studentID = document.getElementById('loginStudentID').value;
+            var password = document.getElementById('loginPassword').value;
+
+            // 基本檢查
+            if (studentID == "" || password == "") {
+                alert("請填寫學號與密碼！");
+                return;
+            }
+
+            // 查詢資料庫 (使用傳統的 .get() 與 .then())
+            db.collection("users").doc(studentID).get().then(function(doc) {
+                if (doc.exists) {
+                    var userData = doc.data();
+                    
+                    // 比對密碼
+                    if (userData.password == password) {
+                        alert("登入成功！");
+                        // 存入學號，方便其他頁面使用
+                        localStorage.setItem('studentID', studentID);
+                        // 跳轉到首頁
+                        window.location.href = "home.html";
+                    } else {
+                        alert("密碼錯誤，請再試一次。");
+                    }
+                } else {
+                    alert("找不到此學號，請確認是否已註冊。");
+                }
+            }).catch(function(error) {
+                console.error("發生錯誤：", error);
+                alert("登入時發生錯誤，請檢查網路。");
+            });
+        }
+    </script>
+</body>
+</html>

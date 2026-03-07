@@ -1,0 +1,190 @@
+/* 1. 全局和重置樣式 */
+body {
+    /* 移除瀏覽器預設的外邊距 */
+    margin: 0;
+    /* 設定基礎字體和背景顏色 */
+    font-family: Arial, sans-serif, "Microsoft JhengHei", "微軟正黑體";
+    line-height: 1.6;
+    color: #333;
+    background-color: #f4f4f4;
+    /* 淺灰色背景讓內容更突出 */
+}
+
+/* 2. 標頭 (Header) 樣式 */
+header {
+    background-color: black;
+    /* 品牌藍色 */
+    color: white;
+    padding: 25px 0;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* 增加陰影 */
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2em;
+}
+
+/* 導航 (Navigation) 樣式 */
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 0 0;
+    display: flex;
+    /* 使用 Flexbox 讓導航項目水平排列 */
+    justify-content: center;
+    /* 導航項目置中 */
+}
+
+nav ul li {
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 5px 10px;
+    transition: background-color 0.3s;
+    /* 平滑過渡效果 */
+}
+
+nav ul li a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    /* 滑鼠懸停效果 */
+    border-radius: 5px;
+}
+
+/* 3. 主要內容 (Main) 容器樣式 */
+main {
+    max-width: 1100px;
+    /* 限制內容最大寬度 */
+    margin: 20px auto;
+    /* 內容置中並上下留白 */
+    padding: 0 20px;
+}
+
+/* 4. 區塊 (Section) 樣式 */
+section {
+    background-color: white;
+    padding: 40px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* 英雄區塊 (#hero) 樣式 */
+#hero {
+    text-align: center;
+    background-color: #e9ecef;
+    /* 淺灰底色 */
+    padding: 80px 40px;
+}
+
+#hero h2 {
+
+    color: black;
+    /*歡迎來到*/
+    font-size: 3em;
+    margin-top: 0;
+}
+
+#hero p {
+    font-size: 1.2em;
+}
+
+/* 按鈕樣式 (.button) */
+.button {
+    display: inline-block;
+    background-color: #2894a7;
+    /* 綠色按鈕 */
+    color: rgb(0, 0, 0);
+    padding: 20px 50px;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-top: 20px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.button:hover {
+    background-color: #218838;
+}
+
+/* 特色區塊 (#features) 樣式 */
+#features {
+    display: flex;
+    /* 使用 Flexbox 讓三個特色項目水平排列 */
+    justify-content: space-between;
+    /* 在項目間平均分配空間 */
+    gap: 20px;
+    /* 增加項目間的間距 */
+    text-align: center;
+}
+
+#features>div {
+    flex: 1;
+    /* 讓每個 div 平均佔據空間 */
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+/* 5. 頁尾 (Footer) 樣式 */
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+    font-size: 0.9em;
+}
+
+footer a {
+    color: #ffc107;
+    /* 亮色連結，與深色背景形成對比 */
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+#product-container div:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+/* 設定導覽列連結的顏色 */
+nav ul li a,
+nav ul li a:visited,
+nav ul li a:hover,
+nav ul li a:active {
+    color: white !important;
+    /* 強制設定為白色 */
+    text-decoration: none;
+    /* 移除下底線 */
+}
+
+/* 如果你希望滑鼠移上去時有亮一點的效果，可以加這個 */
+nav ul li a:hover {
+    color: #f0f0f0 !important;
+    text-decoration: underline;
+}
+/* 手機版優化：當螢幕小於 768px 時觸發 */
+@media (max-width: 768px) {
+    nav ul {
+        flex-direction: column; /* 讓選單變直列 */
+        align-items: center;
+    }
+    nav ul li {
+        margin: 10px 0;
+    }
+    main {
+        padding: 10px; /* 增加邊距 */
+    }
+    #features {
+        flex-direction: column; /* 讓特色區塊變直列 */
+    }
+}

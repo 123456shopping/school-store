@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合作社管理員 - 掃描系統</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f4; }
+        #reader { width: 100%; max-width: 400px; margin: auto; background: white; }
+        .result-box { background: white; padding: 20px; border-radius: 10px; margin-top: 20px; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>管理員儲值系統</h2>
+    
+    <div id="reader"></div>
+
+    <div id="status" class="result-box">
+        <h3 id="msg-title">處理中...</h3>
+        <p id="msg-body"></p>
+        <button class="btn" onclick="location.href='admin_scan.html'">掃描下一個</button>
+    </div>
+
+    <script>
+        // 1. Firebase 配置 (請確保與你其他頁面的一致)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
+            authDomain: "xinnini1222.firebaseapp.com",
+            projectId: "xinnini1222",
+            storageBucket: "xinnini1222.firebasestorage.app",
+            messagingSenderId: "829700121475",
+            appId: "1:829700121475:web:baf568b0060bf93ede8cb6"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 2. 頁面啟動檢查：看網址有沒有帶資料 (?sid=xxx&amount=xxx)
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sid = urlParams.get('sid');
+            const amount = parseInt(urlParams.get('amount'));
+
+            if (sid && amount) {
+                // 如果是相機掃描後點進來的
+                document.getElementById('status').style.display = 'block';
+                if (confirm(`確認為學號 ${sid} 儲值 $${amount} 嗎？`)) {
+                    doTopup(sid, amount);
+                } else {
+                    location.href = "admin_scan.html";
+                }
+            } else {
+                // 如果是直接打開，啟動相機
+                startScanner();
+            }
+        };
+
+        function startScanner() {
+            const html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
+                (decodedText) => {
+                    // 如果掃到的是網址，直接跳轉去該網址執行
+                    if(decodedText.includes('admin_scan.html')) {
+                        html5QrCode.stop();
+                        window.location.href = decodedText;
+                    }
+                }
+            );
+        }
+
+        function doTopup(sid, amount) {
+            const userRef = db.collection("users").doc(sid);
+            userRef.get().then(doc => {
+                if (doc.exists) {
+                    const newBalance = (doc.data().balance || 0) + amount;
+                    userRef.update({ balance: newBalance }).then(() => {
+                        db.collection("orders").add({
+                            studentID: sid,
+                            type: "儲值",
+                            amount: amount,
+                            timestamp: new Date().toLocaleString()
+                        });
+                        document.getElementById('msg-title').innerText = "✅ 儲值成功！";
+                        document.getElementById('msg-body').innerText = `學號：${sid}\n存入：$${amount}\n目前餘額：$${newBalance}`;
+                    });
+                } else {
+                    alert("錯誤：找不到該學生帳號！");
+                }
+            });
+        }
+    </script>
+</body>
+</html>

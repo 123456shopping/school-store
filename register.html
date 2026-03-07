@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>註冊帳號 - 合作社線上系統</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <style>
+        /* 保持原本的 CSS 樣式 */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #e9ecef;
+            font-family: Arial, sans-serif, "Microsoft JhengHei", "微軟正黑體";
+        }
+
+        .login-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-container h2 {
+            margin-bottom: 25px;
+            color: #007bff;
+            font-size: 1.8em;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745; /* 註冊用綠色區分 */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+
+        .login-button:hover {
+            background-color: #218838;
+        }
+
+        .footer-links {
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .footer-links a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-container">
+        <h2>註冊學生帳號</h2>
+        <div class="input-group">
+            <label for="username">姓名</label>
+            <input type="text" id="username" placeholder="例如：王小明">
+        </div>
+        <div class="input-group">
+            <label for="studentID">學號</label>
+            <input type="text" id="studentID" placeholder="請輸入學號">
+        </div>
+        <div class="input-group">
+            <label for="email">電子郵件</label>
+            <input type="email" id="email" placeholder="example@mail.com">
+        </div>
+        <div class="input-group">
+            <label for="password">設定密碼</label>
+            <input type="password" id="password" placeholder="請設定密碼">
+        </div>
+
+        <button class="login-button" onclick="register()">立即註冊</button>
+
+        <div class="footer-links">
+            <a href="index.html">已有帳號？回登入頁面</a>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        // 2. Firebase 初始化 (請確保 apiKey 等資訊與 index.html 一致)
+        var firebaseConfig = {
+            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
+            authDomain: "xinnini1222.firebaseapp.com",
+            projectId: "xinnini1222",
+            storageBucket: "xinnini1222.firebasestorage.app",
+            messagingSenderId: "1071285094200",
+            appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        var db = firebase.firestore();
+
+        // 3. 註冊邏輯
+        function register() {
+            var name = document.getElementById('username').value;
+            var id = document.getElementById('studentID').value;
+            var mail = document.getElementById('email').value;
+            var pw = document.getElementById('password').value;
+
+            // 檢查欄位是否空白
+            if (name == "" || id == "" || mail == "" || pw == "") {
+                alert("所有欄位都必須填寫！");
+                return;
+            }
+
+            // 先檢查學號是否已經被註冊過
+            db.collection("users").doc(id).get().then(function(doc) {
+                if (doc.exists) {
+                    alert("此學號已註冊過！");
+                } else {
+                    // 若沒被註冊過，則新增資料
+                    db.collection("users").doc(id).set({
+                        username: name,
+                        studentID: id,
+                        email: mail,
+                        password: pw,
+                        balance: 0, // 初始餘額給 0
+                        createdAt: new Date().toLocaleString() // 存入註冊時間
+                    }).then(function() {
+                        alert("註冊成功！請重新登入。");
+                        window.location.href = "index.html";
+                    }).catch(function(error) {
+                        alert("註冊失敗，請稍後再試。");
+                        console.error(error);
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
