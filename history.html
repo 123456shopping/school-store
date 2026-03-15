@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="styles.css">
     <title>交易紀錄 - 合作社線上系統</title>
     <style>
-        /* 保持原本的 CSS 樣式 */
         .order-card { 
             background: white; 
             padding: 15px; 
@@ -15,14 +14,33 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
             border-left: 5px solid #007bff;
         }
-        .order-date { font-weight: bold; color: #007bff; border-bottom: 1px solid #eee; margin-bottom: 10px; padding-bottom: 5px; }
-        .item-row { display: flex; justify-content: space-between; font-size: 0.9em; padding: 5px 0; border-bottom: 1px dashed #eee; }
-        .total-price { text-align: right; font-weight: bold; margin-top: 10px; color: #d9534f; font-size: 1.1em; }
+        .order-date { 
+            font-weight: bold; 
+            color: #007bff; 
+            border-bottom: 1px solid #eee; 
+            margin-bottom: 10px; 
+            padding-bottom: 5px; 
+        }
+        .item-row { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 0.9em; 
+            padding: 5px 0; 
+            border-bottom: 1px dashed #eee; 
+        }
+        .total-price { 
+            text-align: right; 
+            font-weight: bold; 
+            margin-top: 10px; 
+            color: #d9534f; 
+            font-size: 1.1em; 
+        }
+        #loading-msg { text-align: center; color: #666; margin-top: 20px; }
     </style>
 </head>
 <body>
     <header>
-        <h1>我的交易紀錄</h1>
+        <h1>交易紀錄</h1>
         <nav>
             <ul>
                 <li><a href="home.html">回首頁</a></li>
@@ -31,92 +49,110 @@
         </nav>
     </header>
 
-    <main id="history-content" style="max-width: 600px; margin: 20px auto; padding: 0 10px;">
+    <main id="history-container" style="padding: 20px;">
         <p id="loading-msg">正在讀取紀錄...</p>
-        <div id="orders-container"></div>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // 2. Firebase 初始化
-        var firebaseConfig = {
-            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
-            authDomain: "xinnini1222.firebaseapp.com",
-            projectId: "xinnini1222",
-            storageBucket: "xinnini1222.firebasestorage.app",
-            messagingSenderId: "1071285094200",
-            appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
-        };
+    var firebaseConfig = {
+        apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
+        projectId: "xinnini1222",
+        storageBucket: "xinnini1222.firebasestorage.app",
+        messagingSenderId: "1071285094200",
+        appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
+    };
+
+    if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
-        var db = firebase.firestore();
+    }
+    var db = firebase.firestore();
 
-        // 3. 載入紀錄
-        function loadHistory() {
-            var studentID = localStorage.getItem('studentID');
-            var container = document.getElementById('orders-container');
-            var loadingMsg = document.getElementById('loading-msg');
+    function loadHistory() {
+        var studentID = localStorage.getItem('studentID');
+        var container = document.getElementById('history-container');
+        var loadingMsg = document.getElementById('loading-msg');
 
-            if (!studentID) {
-                alert("請先登入！");
-                window.location.href = "index.html";
-                return;
-            }
-
-            // 查詢 orders 集合中屬於該學號的資料
-            db.collection("orders")
-                .where("studentID", "==", studentID)
-                .get()
-                .then(function(querySnapshot) {
-                    loadingMsg.style.display = 'none';
-                    
-                    if (querySnapshot.empty) {
-                        container.innerHTML = "<p style='text-align:center;'>目前沒有任何交易紀錄。</p>";
-                        return;
-                    }
-
-                    var finalHtml = "";
-
-                    // 外層迴圈：每一筆訂單 (doc)
-                    querySnapshot.forEach(function(doc) {
-                        var order = doc.data();
-                        
-                        // 建立訂單卡片的外殼
-                        var cardHtml = '<div class="order-card">';
-                        cardHtml += '<div class="order-date">交易時間：' + (order.timestamp || "未知時間") + '</div>';
-
-                        // 判斷是否有商品清單 (如果是購物才有 items)
-                        if (order.items && order.items.length > 0) {
-                            // 內層迴圈：處理該訂單內的每個商品
-                            for (var i = 0; i < order.items.length; i++) {
-                                var item = order.items[i];
-                                cardHtml += '<div class="item-row">';
-                                cardHtml += '<span>' + item.name + ' x ' + item.quantity + '</span>';
-                                cardHtml += '<span>$' + (item.price * item.quantity) + '</span>';
-                                cardHtml += '</div>';
-                            }
-                            cardHtml += '<div class="total-price">總計：$' + order.totalPrice + '</div>';
-                        } else if (order.type == "儲值") {
-                            // 如果是儲值紀錄
-                            cardHtml += '<div style="color: #28a745; font-weight: bold;">帳戶儲值：+$' + order.amount + '</div>';
-                        }
-
-                        cardHtml += '</div>'; // 關閉卡片 div
-                        
-                        finalHtml += cardHtml; // 累積到總 HTML
-                    });
-
-                    container.innerHTML = finalHtml;
-                })
-                .catch(function(error) {
-                    console.log("讀取紀錄失敗:", error);
-                    loadingMsg.innerText = "讀取失敗，請檢查資料庫連線。";
-                });
+        if (!studentID) {
+            container.innerHTML = "<p>請先登入！</p>";
+            return;
         }
 
-        // 啟動載入
-        window.onload = loadHistory;
-    </script>
+        db.collection("orders")
+            .where("studentID", "==", studentID)
+            .get()
+            .then(function(querySnapshot) {
+                loadingMsg.style.display = 'none';
+                
+                if (querySnapshot.empty) {
+                    container.innerHTML = "<p>目前尚無交易紀錄。</p>";
+                    return;
+                }
+
+                var finalHtml = "";
+                var docs = [];
+                querySnapshot.forEach(doc => docs.push(doc.data()));
+                
+                // 排序：將所有時間嘗試轉為數值後由新到舊排序
+                docs.sort((a, b) => {
+                    var timeA = new Date(a.timestamp || 0).getTime();
+                    var timeB = new Date(b.timestamp || 0).getTime();
+                    return timeB - timeA;
+                });
+
+                docs.forEach(function(order) {
+                    // --- 修改重點：強制 12 小時制 (上午/下午) ---
+                    var displayDate = "未知時間";
+                    var rawDate = order.timestamp; 
+
+                    if (rawDate) {
+                        var dateObj;
+                        if (rawDate && typeof rawDate === 'object' && rawDate.seconds) {
+                            dateObj = new Date(rawDate.seconds * 1000);
+                        } else {
+                            dateObj = new Date(rawDate);
+                        }
+
+                        if (dateObj && !isNaN(dateObj.getTime())) {
+                            displayDate = dateObj.toLocaleString('zh-TW', { 
+                                year: 'numeric', 
+                                month: '2-digit', 
+                                day: '2-digit', 
+                                hour: '2-digit', 
+                                minute: '2-digit', 
+                                second: '2-digit', 
+                                hour12: true // 改為 true，即顯示「上午/下午」
+                            });
+                        } else {
+                            displayDate = rawDate; 
+                        }
+                    }
+
+                    var cardHtml = '<div class="order-card">';
+                    cardHtml += '<div class="order-date">交易時間：' + displayDate + '</div>';
+                    
+                    if (order.items && order.items.length > 0) {
+                        order.items.forEach(item => {
+                            cardHtml += `<div class="item-row"><span>${item.name} x ${item.quantity}</span><span>$${item.price * item.quantity}</span></div>`;
+                        });
+                        cardHtml += `<div class="total-price">總計：$${order.totalPrice}</div>`;
+                    } else if (order.type == "儲值" || order.amount) {
+                        var amount = order.amount || 0;
+                        cardHtml += `<div style="color: #28a745; font-weight: bold; padding: 5px 0;">帳戶儲值：+$${amount}</div>`;
+                    }
+                    cardHtml += '</div>';
+                    finalHtml += cardHtml;
+                });
+                container.innerHTML = finalHtml;
+            })
+            .catch(err => {
+                console.error("讀取失敗:", err);
+                loadingMsg.innerText = "讀取失敗，請確認 Firebase 索引設定或網路。";
+            });
+    }
+    window.onload = loadHistory;
+</script>
 </body>
 </html>
