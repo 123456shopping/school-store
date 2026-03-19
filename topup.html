@@ -8,87 +8,66 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         .topup-container { background: white; padding: 30px; border-radius: 10px; text-align: center; max-width: 400px; margin: 50px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .amount-btn { padding: 10px 20px; margin: 5px; cursor: pointer; border: 1px solid #007bff; background: white; border-radius: 5px; }
+        .amount-btn { padding: 10px 20px; margin: 5px; cursor: pointer; border: 1px solid #007bff; background: white; border-radius: 5px; font-size: 16px; transition: 0.3s; }
         .amount-btn:hover { background: #007bff; color: white; }
         #qrcode { margin-top: 20px; display: flex; justify-content: center; }
-        #qr-hint { color: #666; font-size: 0.9em; margin-top: 10px; display: none; }
+        #qr-hint { color: #d9534f; font-weight: bold; font-size: 0.9em; margin-top: 10px; display: none; }
+        .back-link { display: block; margin-top: 20px; color: #666; text-decoration: none; }
     </style>
 </head>
 <body>
     <div class="topup-container">
        <h2 style="color: #007bff;">帳戶儲值</h2>
-        <p>您的學號：<span id="display-sid">載入中...</span></p>
+        <p>您的學號：<strong id="display-sid">載入中...</strong></p>
+        
         <div class="amount-buttons">
             <button class="amount-btn" onclick="generateQR(50)">$50</button>
             <button class="amount-btn" onclick="generateQR(100)">$100</button>
             <button class="amount-btn" onclick="generateQR(500)">$500</button>
         </div>
-        <div id="qrcode"></div>
-        <p id="qr-hint">請向合作社管理員出示此碼掃描</p>
-        <br>
-        <a href="home.html">回首頁</a>
+
+       <div id="qrcode"></div>
+        <p id="qr-hint"> 請向合作社管理員出示此碼掃描</p>
+        
+        <a href="home.html" class="back-link">回首頁</a>
     </div>
 
-   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
 <script>
-    // 1. Firebase 初始化 (請使用你 home.html 中的配置)
-    var firebaseConfig = {
-        apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
-        projectId: "xinnini1222",
-        storageBucket: "xinnini1222.firebasestorage.app",
-        messagingSenderId: "1071285094200",
-        appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
-    };
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    var db = firebase.firestore();
-
-    const studentID = localStorage.getItem('studentID'); // 取得目前登入者學號
+    // 取得目前登入者學號
+    const studentID = localStorage.getItem('studentID'); 
     if (!studentID) {
         alert("請先登入！");
         window.location.href = "index.html";
     }
     document.getElementById('display-sid').innerText = studentID;
 
-    // 核心功能：從資料庫辨認身份
-    async function generateQR(amount) {
-        try {
-            // A. 去資料庫檢查目前登入的人是不是管理員
-            // 假設你的管理員資料存在 "admins" 集合中，文件 ID 是學號
-            const adminDoc = await db.collection("admins").doc(studentID).get();
+    // 【核心修改】點擊金額後，直接要求輸入密碼
+    function generateQR(amount) {
+        // 1. 彈出密碼輸入框
+        const password = prompt(`請管理員輸入授權密碼以產生 $${amount} 儲值碼：`);
 
-            if (adminDoc.exists && adminDoc.data().role === "admin") {
-                // B. 身份驗證成功，彈出密碼視窗
-                const password = prompt("管理員身份確認成功，請輸入授權密碼：");
+        // 2. 驗證密碼（此處設定為 1234）
+        if (password === "1234") {
+            const qrContainer = document.getElementById("qrcode");
+            qrContainer.innerHTML = ""; // 清除舊的 QR Code
+            document.getElementById("qr-hint").style.display = "block";
 
-                if (password === "1234") {
-                    const qrContainer = document.getElementById("qrcode");
-                    qrContainer.innerHTML = ""; // 清除舊圖
-                    document.getElementById("qr-hint").style.display = "block";
+            // 3. 取得目前網址路徑，並指向 admin_scan.html
+            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+            const qrUrl = `${baseUrl}/admin_scan.html?sid=${studentID}&amount=${amount}&t=${new Date().getTime()}`;
 
-                    const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-                    const qrUrl = `${baseUrl}/admin_scan.html?sid=${studentID}&amount=${amount}&t=${new Date().getTime()}`;
+            // 4. 產生 QR Code
+            new QRCode(qrContainer, {
+                text: qrUrl,
+                width: 200,
+                height: 200,
+                correctLevel: QRCode.CorrectLevel.H
+            });
 
-                    new QRCode(qrContainer, {
-                        text: qrUrl,
-                        width: 200,
-                        height: 200,
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
-                    alert("驗證成功，請出示儲值碼。");
-                } else if (password !== null) {
-                    alert("密碼錯誤！");
-                }
-            } else {
-                // C. 如果在 admins 集合找不到該學號，或 role 不是 admin
-                alert("權限不足：您的帳號不具備管理員權限，無法執行此操作。");
-            }
-        } catch (error) {
-            console.error("驗證過程出錯:", error);
-            alert("系統錯誤，請稍後再試。");
+            alert("驗證成功！QR Code 已產生，請交給管理員掃描。");
+        } else if (password !== null) {
+            // 如果輸入錯誤且不是按「取消」
+            alert("密碼錯誤！無法產生儲值碼。");
         }
     }
 </script>
