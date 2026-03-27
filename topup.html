@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,113 +16,79 @@
             margin: 50px auto;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-
         .amount-btn {
             padding: 10px 20px;
-            margin: 5px;
+            margin: 10px;
             cursor: pointer;
             border: 1px solid #007bff;
             background: white;
             border-radius: 5px;
+            font-size: 1.1em;
+            transition: 0.3s;
         }
-
         .amount-btn:hover {
             background: #007bff;
             color: white;
         }
-
         #qrcode {
             margin-top: 20px;
             display: flex;
             justify-content: center;
         }
-
         #qr-hint {
-            color: #666;
-            font-size: 0.9em;
             margin-top: 10px;
+            color: #666;
             display: none;
         }
     </style>
 </head>
-
 <body>
+    <header>
+        <h1>合作社線上系統</h1>
+        <nav>
+            <ul>
+                <li><a href="home.html">回首頁</a></li>
+                <li><a href="history.html">交易紀錄</a></li>
+            </ul>
+        </nav>
+    </header>
+
     <div class="topup-container">
-        <h2 style="color: #007bff;">帳戶儲值</h2>
-        <p>您的學號：<span id="display-sid">載入中...</span></p>
-        <div class="amount-buttons">
-            <button class="amount-btn" onclick="generateQR(50)">$50</button>
-            <button class="amount-btn" onclick="generateQR(100)">$100</button>
-            <button class="amount-btn" onclick="generateQR(500)">$500</button>
-        </div>
+        <h2>請選擇儲值金額</h2>
+        <button class="amount-btn" onclick="generateTopupQR(100)">$100</button>
+        <button class="amount-btn" onclick="generateTopupQR(200)">$200</button>
+        <button class="amount-btn" onclick="generateTopupQR(500)">$500</button>
+        <button class="amount-btn" onclick="generateTopupQR(1000)">$1000</button>
+
         <div id="qrcode"></div>
-        <p id="qr-hint">請向合作社管理員出示此碼掃描</p>
-        <br>
-        <a href="home.html">回首頁</a>
+        <p id="qr-hint">請出示此畫面給管理員掃描</p>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
     <script>
-
-        var firebaseConfig = {
-            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
-            projectId: "xinnini1222",
-            storageBucket: "xinnini1222.firebasestorage.app",
-            messagingSenderId: "1071285094200",
-            appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
-        };
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        var db = firebase.firestore();
-
-        const studentID = localStorage.getItem('studentID');
-        if (!studentID) {
-            alert("請先登入！");
-            window.location.href = "index.html";
-        }
-        document.getElementById('display-sid').innerText = studentID;
-
-
-        async function generateQR(amount) {
-            try {
-
-                const adminDoc = await db.collection("admins").doc(studentID).get();
-
-                if (adminDoc.exists && adminDoc.data().role === "admin") {
-
-                    const password = prompt("管理員身份確認成功，請輸入授權密碼：");
-
-                    if (password === "1234") {
-                        const qrContainer = document.getElementById("qrcode");
-                        qrContainer.innerHTML = "";
-                        document.getElementById("qr-hint").style.display = "block";
-
-                        const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-                        const qrUrl = `${baseUrl}/admin_scan.html?sid=${studentID}&amount=${amount}&t=${new Date().getTime()}`;
-
-                        new QRCode(qrContainer, {
-                            text: qrUrl,
-                            width: 200,
-                            height: 200,
-                            correctLevel: QRCode.CorrectLevel.H
-                        });
-                        alert("驗證成功，請出示儲值碼。");
-                    } else if (password !== null) {
-                        alert("密碼錯誤！");
-                    }
-                } else {
-
-                    alert("權限不足：您的帳號不具備管理員權限，無法執行此操作。");
-                }
-            } catch (error) {
-                console.error("驗證過程出錯:", error);
-                alert("系統錯誤，請稍後再試。");
+        function generateTopupQR(amount) {
+            const studentID = localStorage.getItem('studentID');
+            if (!studentID) {
+                alert("登入逾時，請重新登入");
+                window.location.href = "index.html";
+                return;
             }
+
+            const qrContainer = document.getElementById("qrcode");
+            qrContainer.innerHTML = ""; // 清除舊碼
+            document.getElementById("qr-hint").style.display = "block";
+
+            // 取得當前網址路徑，組合成管理員掃描頁面的連結
+            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+            // 格式：admin_scan.html?sid=學號&amount=金額&t=時間戳(防快取)
+            const qrUrl = `${baseUrl}/admin_scan.html?sid=${studentID}&amount=${amount}&t=${new Date().getTime()}`;
+
+            new QRCode(qrContainer, {
+                text: qrUrl,
+                width: 200,
+                height: 200,
+                correctLevel: QRCode.CorrectLevel.H
+            });
         }
     </script>
 </body>
-
 </html>
