@@ -11,7 +11,7 @@
         .container { max-width: 400px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .btn { padding: 12px 25px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 15px; }
         .info-box { text-align: left; background: #eee; padding: 15px; border-radius: 8px; margin: 20px 0; }
-        #status-msg { margin-top: 20px; font-weight: bold; }
+        #status-msg { margin-top: 20px; font-weight: bold; font-size: 1.2em; }
         .success { color: #28a745; }
         .error { color: #dc3545; }
     </style>
@@ -19,9 +19,9 @@
 <body>
 
     <div class="container">
-        <h2>儲值系統控制台</h2>
+        <h2>儲值授權驗證</h2>
         <div id="process-ui">
-            <p>正在讀取 QR Code 資料...</p>
+            <p id="loading-text">正在讀取資料...</p>
         </div>
 
         <div id="result-ui" style="display: none;">
@@ -32,7 +32,7 @@
     </div>
 
     <script>
-        // --- Firebase 配置 (請確保與你的專案一致) ---
+        // --- Firebase 配置 ---
         var firebaseConfig = {
             apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
             authDomain: "xinnini1222.firebaseapp.com",
@@ -44,17 +44,30 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 頁面載入後自動抓取參數
+        // 設定管理員授權密碼 (你可以自行修改)
+        const ADMIN_PASSWORD = "1234"; 
+
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const sid = urlParams.get('sid');
             const amount = parseInt(urlParams.get('amount'));
 
             if (sid && amount) {
-                if (confirm(`確認要為學號 ${sid} 儲值 $${amount} 嗎？`)) {
-                    doTopup(sid, amount);
+                // 第一關：確認基本資訊
+                if (confirm(`準備為學號 ${sid} 儲值 $${amount}\n按確定後請輸入授權密碼。`)) {
+                    
+                    // 第二關：輸入密碼
+                    const pwd = prompt("請輸入管理員授權密碼：");
+                    
+                    if (pwd === ADMIN_PASSWORD) {
+                        doTopup(sid, amount);
+                    } else if (pwd !== null) {
+                        alert("密碼錯誤，儲值失敗！");
+                        window.location.href = "home.html";
+                    } else {
+                        window.location.href = "home.html"; // 使用者按取消
+                    }
                 } else {
-                    alert("已取消操作");
                     window.location.href = "home.html";
                 }
             } else {
@@ -63,16 +76,18 @@
         };
 
         function doTopup(sid, amount) {
+            document.getElementById('loading-text').innerText = "處理中，請稍候...";
             const userRef = db.collection("users").doc(sid);
             
             userRef.get().then(doc => {
                 if (doc.exists) {
-                    const newBalance = (doc.data().balance || 0) + amount;
+                    const oldBalance = doc.data().balance || 0;
+                    const newBalance = oldBalance + amount;
                     
                     userRef.update({ balance: newBalance }).then(() => {
-                        showResult(true, `學號：${sid}<br>儲值金額：$${amount}<br>目前餘額：$${newBalance}`);
+                        showResult(true, `<b>儲值成功！</b><br>學號：${sid}<br>原餘額：$${oldBalance}<br>儲值金額：$${amount}<br><b>目前餘額：$${newBalance}</b>`);
                         
-                        // 可選：新增一筆交易紀錄到 orders 集合
+                        // 寫入交易紀錄
                         db.collection("orders").add({
                             studentID: sid,
                             type: "儲值",
@@ -84,7 +99,7 @@
                     showResult(false, "找不到此學生帳號。");
                 }
             }).catch(error => {
-                showResult(false, "資料庫連線錯誤：" + error.message);
+                showResult(false, "系統錯誤：" + error.message);
             });
         }
 
@@ -95,10 +110,10 @@
             
             const statusMsg = document.getElementById('status-msg');
             if (isSuccess) {
-                statusMsg.innerText = " 儲值成功！";
+                statusMsg.innerText = "✅ 儲值程序已完成";
                 statusMsg.className = "success";
             } else {
-                statusMsg.innerText = " 儲值失敗";
+                statusMsg.innerText = "❌ 處理失敗";
                 statusMsg.className = "error";
             }
         }
