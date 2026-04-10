@@ -1,43 +1,53 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
     <title>交易紀錄 - 合作社線上系統</title>
     <style>
-        .order-card { 
-            background: white; 
-            padding: 15px; 
-            margin-bottom: 15px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-            border-left: 5px solid #007bff;
+        .order-card {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid hsl(205, 73%,58%) ;
         }
-        .order-date { 
-            font-weight: bold; 
-            color: #007bff; 
-            border-bottom: 1px solid #eee; 
-            margin-bottom: 10px; 
-            padding-bottom: 5px; 
+
+        .order-date {
+            font-weight: bold;
+            color:hsl(205, 73%, 58%) ;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
         }
-        .item-row { 
-            display: flex; 
-            justify-content: space-between; 
-            font-size: 0.9em; 
-            padding: 5px 0; 
-            border-bottom: 1px dashed #eee; 
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            padding: 5px 0;
+            border-bottom: 1px dashed #eee;
         }
-        .total-price { 
-            text-align: right; 
-            font-weight: bold; 
-            margin-top: 10px; 
-            color: #d9534f; 
-            font-size: 1.1em; 
+
+        .total-price {
+            text-align: right;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #d9534f;
+            font-size: 1.1em;
         }
-        #loading-msg { text-align: center; color: #666; margin-top: 20px; }
+
+        #loading-msg {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+        }
     </style>
 </head>
+
 <body>
     <header>
         <h1>交易紀錄</h1>
@@ -57,102 +67,103 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-    var firebaseConfig = {
-        apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
-        projectId: "xinnini1222",
-        storageBucket: "xinnini1222.firebasestorage.app",
-        messagingSenderId: "1071285094200",
-        appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
-    };
+        var firebaseConfig = {
+            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
+            projectId: "xinnini1222",
+            storageBucket: "xinnini1222.firebasestorage.app",
+            messagingSenderId: "1071285094200",
+            appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
+        };
 
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    var db = firebase.firestore();
-
-    function loadHistory() {
-        var studentID = localStorage.getItem('studentID');
-        var container = document.getElementById('history-container');
-        var loadingMsg = document.getElementById('loading-msg');
-
-        if (!studentID) {
-            container.innerHTML = "<p>請先登入！</p>";
-            return;
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
+        var db = firebase.firestore();
 
-        db.collection("orders")
-            .where("studentID", "==", studentID)
-            .get()
-            .then(function(querySnapshot) {
-                loadingMsg.style.display = 'none';
-                
-                if (querySnapshot.empty) {
-                    container.innerHTML = "<p>目前尚無交易紀錄。</p>";
-                    return;
-                }
+        function loadHistory() {
+            var studentID = localStorage.getItem('studentID');
+            var container = document.getElementById('history-container');
+            var loadingMsg = document.getElementById('loading-msg');
 
-                var finalHtml = "";
-                var docs = [];
-                querySnapshot.forEach(doc => docs.push(doc.data()));
-                
-                // 排序：將所有時間嘗試轉為數值後由新到舊排序
-                docs.sort((a, b) => {
-                    var timeA = new Date(a.timestamp || 0).getTime();
-                    var timeB = new Date(b.timestamp || 0).getTime();
-                    return timeB - timeA;
-                });
+            if (!studentID) {
+                container.innerHTML = "<p>請先登入！</p>";
+                return;
+            }
 
-                docs.forEach(function(order) {
-                    // --- 修改重點：強制 12 小時制 (上午/下午) ---
-                    var displayDate = "未知時間";
-                    var rawDate = order.timestamp; 
+            db.collection("orders")
+                .where("studentID", "==", studentID)
+                .get()
+                .then(function (querySnapshot) {
+                    loadingMsg.style.display = 'none';
 
-                    if (rawDate) {
-                        var dateObj;
-                        if (rawDate && typeof rawDate === 'object' && rawDate.seconds) {
-                            dateObj = new Date(rawDate.seconds * 1000);
-                        } else {
-                            dateObj = new Date(rawDate);
+                    if (querySnapshot.empty) {
+                        container.innerHTML = "<p>目前尚無交易紀錄。</p>";
+                        return;
+                    }
+
+                    var finalHtml = "";
+                    var docs = [];
+                    querySnapshot.forEach(doc => docs.push(doc.data()));
+
+
+                    docs.sort((a, b) => {
+                        var timeA = new Date(a.timestamp || 0).getTime();
+                        var timeB = new Date(b.timestamp || 0).getTime();
+                        return timeB - timeA;
+                    });
+
+                    docs.forEach(function (order) {
+
+                        var displayDate = "未知時間";
+                        var rawDate = order.timestamp;
+
+                        if (rawDate) {
+                            var dateObj;
+                            if (rawDate && typeof rawDate === 'object' && rawDate.seconds) {
+                                dateObj = new Date(rawDate.seconds * 1000);
+                            } else {
+                                dateObj = new Date(rawDate);
+                            }
+
+                            if (dateObj && !isNaN(dateObj.getTime())) {
+                                displayDate = dateObj.toLocaleString('zh-TW', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    hour12: true
+                                });
+                            } else {
+                                displayDate = rawDate;
+                            }
                         }
 
-                        if (dateObj && !isNaN(dateObj.getTime())) {
-                            displayDate = dateObj.toLocaleString('zh-TW', { 
-                                year: 'numeric', 
-                                month: '2-digit', 
-                                day: '2-digit', 
-                                hour: '2-digit', 
-                                minute: '2-digit', 
-                                second: '2-digit', 
-                                hour12: true // 改為 true，即顯示「上午/下午」
+                        var cardHtml = '<div class="order-card">';
+                        cardHtml += '<div class="order-date">交易時間：' + displayDate + '</div>';
+
+                        if (order.items && order.items.length > 0) {
+                            order.items.forEach(item => {
+                                cardHtml += `<div class="item-row"><span>${item.name} x ${item.quantity}</span><span>$${item.price * item.quantity}</span></div>`;
                             });
-                        } else {
-                            displayDate = rawDate; 
+                            cardHtml += `<div class="total-price">總計：$${order.totalPrice}</div>`;
+                        } else if (order.type == "儲值" || order.amount) {
+                            var amount = order.amount || 0;
+                            cardHtml += `<div style="color: hsl(218, 53%, 48%) ; font-weight: bold; padding: 5px 0;">帳戶儲值：+$${amount}</div>`;
                         }
-                    }
-
-                    var cardHtml = '<div class="order-card">';
-                    cardHtml += '<div class="order-date">交易時間：' + displayDate + '</div>';
-                    
-                    if (order.items && order.items.length > 0) {
-                        order.items.forEach(item => {
-                            cardHtml += `<div class="item-row"><span>${item.name} x ${item.quantity}</span><span>$${item.price * item.quantity}</span></div>`;
-                        });
-                        cardHtml += `<div class="total-price">總計：$${order.totalPrice}</div>`;
-                    } else if (order.type == "儲值" || order.amount) {
-                        var amount = order.amount || 0;
-                        cardHtml += `<div style="color: #28a745; font-weight: bold; padding: 5px 0;">帳戶儲值：+$${amount}</div>`;
-                    }
-                    cardHtml += '</div>';
-                    finalHtml += cardHtml;
+                        cardHtml += '</div>';
+                        finalHtml += cardHtml;
+                    });
+                    container.innerHTML = finalHtml;
+                })
+                .catch(err => {
+                    console.error("讀取失敗:", err);
+                    loadingMsg.innerText = "讀取失敗，請確認 Firebase 索引設定或網路。";
                 });
-                container.innerHTML = finalHtml;
-            })
-            .catch(err => {
-                console.error("讀取失敗:", err);
-                loadingMsg.innerText = "讀取失敗，請確認 Firebase 索引設定或網路。";
-            });
-    }
-    window.onload = loadHistory;
-</script>
+        }
+        window.onload = loadHistory;
+    </script>
 </body>
+
 </html>

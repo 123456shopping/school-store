@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="styles.css">
     <title>服務項目 - 零食專區</title>
     <style>
-        /* 統一商品卡片樣式 */
         .product-card {
             border: 1px solid #eee;
             padding: 20px;
@@ -49,24 +48,24 @@
             margin: 10px 0;
         }
 
-       .buy-btn {
-    width: 100%;
-    padding: 12px;
-    background-color: #ffffff; /* 白底 */
-    color: #000000;             /* 黑字 */
-    border: 1px solid #000000;  /* 黑框 */
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 1rem;
-    transition: all 0.3s ease;  /* 讓變色效果更平滑 */
-}
+        .buy-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #000000;
+            color: #ffffff;
+            border: 1px solid #000000;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
 
-/* 加上懸停效果：滑鼠移上去時反轉顏色，增加互動感 */
-.buy-btn:hover {
-    background-color: #d0cfcf; /* 變成黑底 */
-    color: #ffffff;             /* 變成白字 */
-}
+
+        .buy-btn:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
     </style>
 </head>
 
@@ -96,8 +95,9 @@
 
         <section id="snacks-list">
             <h2>所有零食</h2>
-            <div id="product-container" style="display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; padding: 20px;">
-                </div>
+            <div id="product-container"
+                style="display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; padding: 20px;">
+            </div>
             <p id="loading-message" style="text-align: center;">正在載入零食清單...</p>
         </section>
     </main>
@@ -110,7 +110,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // Firebase 配置
+
         const firebaseConfig = {
             apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
             authDomain: "xinnini1222.firebaseapp.com",
@@ -125,12 +125,12 @@
 
         const productContainer = document.getElementById('product-container');
         const loadingMessage = document.getElementById('loading-message');
-        
-        // --- 修正點：將分類改回「零食」 ---
-        const targetCategory = "零食"; 
+
+
+        const targetCategory = "零食";
 
         function loadSnackList() {
-            productContainer.innerHTML = ''; 
+            productContainer.innerHTML = '';
 
             db.collection("products")
                 .where("category", "==", targetCategory)
@@ -146,7 +146,7 @@
                     querySnapshot.forEach((doc) => {
                         const product = doc.data();
 
-                        // --- 核心邏輯：圖片檢查 ---
+
                         let imgUrl = product.imageUrl;
                         if (!imgUrl || imgUrl === "" || imgUrl.includes("資料庫無網址")) {
                             imgUrl = "https://via.placeholder.com/300x200?text=No+Image";
@@ -192,4 +192,5 @@
         }
     </script>
 </body>
+
 </html>

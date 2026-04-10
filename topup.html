@@ -20,14 +20,14 @@
             padding: 10px 20px;
             margin: 10px;
             cursor: pointer;
-            border: 1px solid #007bff;
+            border: 1px solid hsl(211, 87%, 82%);
             background: white;
             border-radius: 5px;
             font-size: 1.1em;
             transition: 0.3s;
         }
         .amount-btn:hover {
-            background: #007bff;
+            background: hsl(211, 89%, 36%);
             color: white;
         }
         #qrcode {
@@ -55,10 +55,9 @@
 
     <div class="topup-container">
         <h2>請選擇儲值金額</h2>
-        <button class="amount-btn" onclick="generateTopupQR(100)">$100</button>
-        <button class="amount-btn" onclick="generateTopupQR(200)">$200</button>
+        <button class="amount-btn" onclick="generateTopupQR(50)">$100</button>
+        <button class="amount-btn" onclick="generateTopupQR(100)">$200</button>
         <button class="amount-btn" onclick="generateTopupQR(500)">$500</button>
-        <button class="amount-btn" onclick="generateTopupQR(1000)">$1000</button>
 
         <div id="qrcode"></div>
         <p id="qr-hint">請出示此畫面給管理員掃描</p>

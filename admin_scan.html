@@ -12,8 +12,8 @@
         .btn { padding: 12px 25px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 15px; }
         .info-box { text-align: left; background: #eee; padding: 15px; border-radius: 8px; margin: 20px 0; }
         #status-msg { margin-top: 20px; font-weight: bold; font-size: 1.2em; }
-        .success { color: #28a745; }
-        .error { color: #dc3545; }
+        .success { color: #f2e860; }
+        .error { color: #af3030; }
     </style>
 </head>
 <body>
@@ -110,10 +110,10 @@
             
             const statusMsg = document.getElementById('status-msg');
             if (isSuccess) {
-                statusMsg.innerText = "✅ 儲值程序已完成";
+                statusMsg.innerText = " 儲值程序已完成";
                 statusMsg.className = "success";
             } else {
-                statusMsg.innerText = "❌ 處理失敗";
+                statusMsg.innerText = " 處理失敗";
                 statusMsg.className = "error";
             }
         }

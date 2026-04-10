@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>學生登入 - 合作社線上系統</title>
     <link rel="stylesheet" href="styles.css">
-    
+
     <style>
         body {
             display: flex;
@@ -16,7 +17,8 @@
             background-color: #e9ecef;
             font-family: Arial, sans-serif, "Microsoft JhengHei", "微軟正黑體";
         }
-        .login-container { 
+
+        .login-container {
             background-color: white;
             padding: 40px;
             border-radius: 10px;
@@ -25,16 +27,61 @@
             max-width: 400px;
             text-align: center;
         }
-        .login-container h2 { margin-bottom: 30px; color: #007bff; font-size: 1.8em; }
-        .input-group { margin-bottom: 20px; text-align: left; }
-        .input-group label { display: block; margin-bottom: 8px; font-weight: bold; }
-        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        .login-button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 5px; font-size: 1.1em; cursor: pointer; transition: background 0.3s; }
-        .login-button:hover { background-color: #0056b3; }
-        .footer-links { margin-top: 20px; font-size: 0.9em; }
-        .footer-links a { color: #007bff; text-decoration: none; margin: 0 10px; }
+
+        .login-container h2 {
+            margin-bottom: 30px;
+            color: hsl(211, 89%, 36%);
+            font-size: 1.8em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            background-color:hsl(211, 89%, 36%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .login-button:hover {
+            background-color: #0056b3;
+        }
+
+        .footer-links {
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .footer-links a {
+            color:hsl(211, 89%, 36%);
+            text-decoration: none;
+            margin: 0 10px;
+        }
     </style>
 </head>
+
 <body>
 
     <div class="login-container">
@@ -47,7 +94,7 @@
             <label for="loginPassword">密碼</label>
             <input type="password" id="loginPassword" placeholder="請輸入密碼">
         </div>
-        
+
         <button class="login-button" onclick="login()">登入系統</button>
 
         <div class="footer-links">
@@ -62,7 +109,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // 2. Firebase 初始化
+
         var firebaseConfig = {
             apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
             authDomain: "xinnini1222.firebaseapp.com",
@@ -71,12 +118,12 @@
             messagingSenderId: "1071285094200",
             appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
         };
-        
+
         firebase.initializeApp(firebaseConfig);
         var auth = firebase.auth();
         var db = firebase.firestore();
 
-        // 3. 修正後的登入邏輯
+
         function login() {
             var studentID = document.getElementById('loginStudentID').value;
             var password = document.getElementById('loginPassword').value;
@@ -86,12 +133,12 @@
                 return;
             }
 
-            // A. 先去資料庫查詢這個學號對應的 Email (因為 Authentication 需要 Email 登入)
-            db.collection("users").doc(studentID).get().then(function(doc) {
+
+            db.collection("users").doc(studentID).get().then(function (doc) {
                 if (doc.exists) {
                     var email = doc.data().email;
 
-                    // B. 使用 Firebase Auth 進行安全登入
+
                     auth.signInWithEmailAndPassword(email, password)
                         .then((userCredential) => {
                             alert("登入成功！");
@@ -104,10 +151,11 @@
                 } else {
                     alert("找不到此學號，請確認是否已註冊。");
                 }
-            }).catch(function(error) {
+            }).catch(function (error) {
                 alert("系統錯誤：" + error.message);
             });
         }
     </script>
 </body>
+
 </html>

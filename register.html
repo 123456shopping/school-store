@@ -28,7 +28,7 @@
 
         .login-container h2 {
             margin-bottom: 25px;
-            color: #007bff;
+            color:hsl(211, 89%, 36%);
             font-size: 1.8em;
         }
 
@@ -54,7 +54,7 @@
         .login-button {
             width: 100%;
             padding: 12px;
-            background-color: #28a745;
+            background-color: #0589c6;
             color: white;
             border: none;
             border-radius: 5px;
@@ -63,7 +63,7 @@
         }
 
         .login-button:hover {
-            background-color: #218838;
+            background-color: #0589c6;
         }
 
         .footer-links {
@@ -111,7 +111,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // 2. Firebase 初始化配置
+
         var firebaseConfig = {
             apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
             authDomain: "xinnini1222.firebaseapp.com",
@@ -122,10 +122,10 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        var auth = firebase.auth(); // 初始化驗證功能
+        var auth = firebase.auth();
         var db = firebase.firestore();
 
-        // 3. 整合型註冊功能
+
         function register() {
             var name = document.getElementById('username').value;
             var id = document.getElementById('studentID').value;
@@ -137,52 +137,52 @@
                 return;
             }
 
-            // Firebase 規定密碼至少 6 位數
+
             if (pw.length < 6) {
                 alert("為了安全，密碼請設定至少 6 位數。");
                 return;
             }
 
-            // A. 先檢查學號是否已在資料庫中
-            db.collection("users").doc(id).get().then(function(doc) {
+
+            db.collection("users").doc(id).get().then(function (doc) {
                 if (doc.exists) {
                     alert("此學號已註冊過！");
                 } else {
-                    // B. 在 Authentication 建立帳號
+
                     auth.createUserWithEmailAndPassword(mail, pw)
                         .then((userCredential) => {
-                            // C. 帳號建立成功後，才存入詳細資料到 Firestore
-                            // 注意：不存入 password 欄位以保安全
+
+
                             return db.collection("users").doc(id).set({
                                 username: name,
                                 studentID: id,
                                 email: mail,
-                                balance: 0, 
+                                balance: 0,
                                 role: "student",
-                               
-                               // 在 db.collection("users").doc(id).set 內
-// register.html 中的存入邏輯
-timestamp: new Date().toLocaleString('zh-TW', { 
-    year: 'numeric', 
-    month: '2-digit', 
-    day: '2-digit', 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    second: '2-digit', 
-    hour12: true // 修改處：註冊時即存入 12 小時制字串
-})
+
+
+
+                                timestamp: new Date().toLocaleString('zh-TW', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    hour12: true
+                                })
                             });
                         })
-                        .then(function() {
+                        .then(function () {
                             alert("註冊成功！帳號已同步。");
                             window.location.href = "index.html";
                         })
-                        .catch(function(error) {
+                        .catch(function (error) {
                             alert("註冊失敗：" + error.message);
                             console.error(error);
                         });
                 }
-            }).catch(function(error) {
+            }).catch(function (error) {
                 alert("系統檢查錯誤：" + error.message);
             });
         }

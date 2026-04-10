@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
     <title>服務項目 - 冰品專區</title>
     <style>
-        /* 統一商品卡片樣式 - 與 snacks 一致 */
         .product-card {
             border: 1px solid #eee;
             padding: 20px;
@@ -48,7 +48,7 @@
             margin: 10px 0;
         }
 
-        /* 黑框白底按鈕 */
+
         .buy-btn {
             width: 100%;
             padding: 12px;
@@ -68,6 +68,7 @@
         }
     </style>
 </head>
+
 <body>
     <header>
         <h1>合作社線上系統</h1>
@@ -94,8 +95,9 @@
 
         <section id="snacks-list">
             <h2>所有冰品</h2>
-            <div id="product-container" style="display: flex; flex-wrap: wrap; gap: 25px; justify-content: flex-start; padding: 20px;">
-                </div>
+            <div id="product-container"
+                style="display: flex; flex-wrap: wrap; gap: 25px; justify-content: flex-start; padding: 20px;">
+            </div>
             <p id="loading-message" style="text-align: center;">正在載入冰品清單...</p>
         </section>
     </main>
@@ -121,9 +123,9 @@
                 loadingMessage.style.display = 'none';
                 querySnapshot.forEach((doc) => {
                     const product = doc.data();
-                    // 修正圖片顯示邏輯
+
                     let imgUrl = product.imageUrl || "https://via.placeholder.com/240x160?text=No+Image";
-                    
+
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'product-card';
                     itemDiv.innerHTML = `
@@ -141,11 +143,12 @@
         function addToCart(id, name, price) {
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
             const existing = cart.find(item => item.id === id);
-            if (existing) { existing.quantity += 1; } 
+            if (existing) { existing.quantity += 1; }
             else { cart.push({ id, name, price, quantity: 1 }); }
             localStorage.setItem('cart', JSON.stringify(cart));
             alert(name + " 已加入購物車！");
         }
     </script>
 </body>
+
 </html>
