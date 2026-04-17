@@ -1,75 +1,44 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
     <title>我的購物車 - 合作社線上系統</title>
     <style>
-        .cart-item {
-            border-bottom: 1px solid #ddd;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: white;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
-
-        #cart-container {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-        }
-
-        .checkout-section {
-            text-align: right;
-            margin-top: 20px;
-            padding: 20px;
-            background: #fff;
-            border-radius: 8px;
-        }
-
-        .remove-btn {
-            background: #ff4d4d;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-        }
+        .cart-item { border-bottom: 1px solid #ddd; padding: 15px; display: flex; justify-content: space-between; align-items: center; background: white; margin-bottom: 10px; border-radius: 5px; }
+        #cart-container { max-width: 800px; margin: 20px auto; padding: 20px; }
+        .checkout-section { text-align: right; margin-top: 20px; padding: 20px; background: #fff; border-radius: 8px; }
+        .remove-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        .quantity-input { width: 60px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; margin-left: 10px; }
+        .pickup-section { text-align: left; margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px; border-left: 5px solid hsl(205, 73%, 58%); }
+        .pickup-section label { display: block; font-weight: bold; margin-bottom: 8px; color: #333; }
+        .pickup-section input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .time-hint { font-size: 0.85em; color: #d9534f; margin-top: 5px; }
     </style>
 </head>
-
 <body>
     <header>
         <h1>我的購物車</h1>
-        <nav>
-            <ul>
-                <li><a href="home.html">回首頁</a></li>
-                <li><a href="history.html">交易紀錄</a></li>
-            </ul>
-        </nav>
+        <nav><ul><li><a href="home.html">回首頁</a></li><li><a href="history.html">交易紀錄</a></li></ul></nav>
     </header>
 
     <main id="cart-container">
-        <div id="cart-list">
-        </div>
-
+        <div id="cart-list"></div>
         <div class="checkout-section">
+            <div class="pickup-section">
+                <label for="pickup-time">請選擇領取食物時間：</label>
+                <input type="datetime-local" id="pickup-time" required onclick="updateMinTime()">
+                <p class="time-hint">* 僅限今日或未來的 08:00 - 16:00 領取</p>
+            </div>
             <h3>總金額：$<span id="total-price">0</span></h3>
-            <button id="checkoutBtn" onclick="handleCheckout()"
-                style="padding: 10px 20px; background:hsl(205, 73%, 58%) ; color: white; border: none; border-radius: 5px; cursor: pointer;">確認結帳</button>
-            <button onclick="clearCart()"
-                style="padding: 10px 20px; background: #929ea9; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">清空購物車</button>
+            <button id="checkoutBtn" onclick="handleCheckout()" style="padding: 10px 20px; background:hsl(205, 73%, 58%) ; color: white; border: none; border-radius: 5px; cursor: pointer;">確認結帳</button>
+            <button onclick="clearCart()" style="padding: 10px 20px; background: #929ea9; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">清空購物車</button>
         </div>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
     <script>
         var firebaseConfig = {
             apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
@@ -82,97 +51,63 @@
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
+        function updateMinTime() {
+            var now = new Date();
+            var formattedNow = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2) + '-' + ('0' + now.getDate()).slice(-2) + 'T' + ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
+            document.getElementById('pickup-time').min = formattedNow;
+        }
+
         function renderCart() {
             var cart = JSON.parse(localStorage.getItem('cart')) || [];
-            var cartList = document.getElementById('cart-list');
-            var totalPriceDisplay = document.getElementById('total-price');
-            var total = 0;
-
-            cartList.innerHTML = "";
-
-            if (cart.length == 0) {
-                cartList.innerHTML = "<p>購物車是空的，快去逛逛吧！</p>";
-                totalPriceDisplay.innerText = "0";
-                return;
-            }
-
-            for (var i = 0; i < cart.length; i++) {
-                var item = cart[i];
-                var itemTotal = item.price * item.quantity;
-                total += itemTotal;
-
-                var itemHtml = '<div class="cart-item">';
-                itemHtml += '<div><strong>' + item.name + '</strong><br>價格: $' + item.price + ' x ' + item.quantity + '</div>';
-                itemHtml += '<button class="remove-btn" onclick="removeItem(' + i + ')">刪除</button>';
-                itemHtml += '</div>';
-
-                cartList.innerHTML += itemHtml;
-            }
-
+            var cartList = document.getElementById('cart-list'), totalPriceDisplay = document.getElementById('total-price'), total = 0;
+            cartList.innerHTML = (cart.length === 0) ? "<p>購物車是空的，快去逛逛吧！</p>" : "";
+            cart.forEach((item, i) => {
+                total += (item.price * item.quantity);
+                cartList.innerHTML += `<div class="cart-item"><div><strong>${item.name}</strong><br>單價: $${item.price} | 數量: <input type="number" class="quantity-input" value="${item.quantity}" min="1" onchange="updateQuantity(${i}, this.value)"></div><button class="remove-btn" onclick="removeItem(${i})">刪除</button></div>`;
+            });
             totalPriceDisplay.innerText = total;
         }
 
         function handleCheckout() {
-            var studentID = localStorage.getItem('studentID');
-            var cart = JSON.parse(localStorage.getItem('cart')) || [];
-            var total = parseInt(document.getElementById('total-price').innerText);
+            var studentID = localStorage.getItem('studentID'), cart = JSON.parse(localStorage.getItem('cart')) || [], total = parseInt(document.getElementById('total-price').innerText), pickupTimeValue = document.getElementById('pickup-time').value;
+            if (!studentID || cart.length == 0 || !pickupTimeValue) { alert("請檢查登入、購物車或取貨時間！"); return; }
 
-            if (!studentID) {
-                alert("請先登入！");
-                window.location.href = "index.html";
-                return;
-            }
-            if (cart.length == 0) {
-                alert("購物車是空的！");
-                return;
-            }
+            var selectedDate = new Date(pickupTimeValue), now = new Date();
+            if (selectedDate < now) { alert("不能設定過去時間！"); return; }
+            if (selectedDate.getHours() < 8 || selectedDate.getHours() >= 16) { alert("領取時間限 08:00 - 16:00。"); return; }
 
-            db.collection("users").doc(studentID).get().then(function (doc) {
-                if (doc.exists) {
-                    var userData = doc.data();
-                    var currentBalance = userData.balance || 0;
+            var lockerRef = db.collection("system_status").doc("locker_config"), userRef = db.collection("users").doc(studentID);
 
-                    if (currentBalance < total) {
-                        alert("餘額不足！你還差 $" + (total - currentBalance));
-                    } else {
-
-                        db.collection("users").doc(studentID).update({
-                            balance: currentBalance - total
-                        }).then(function () {
-
-                            db.collection("orders").add({
-                                studentID: studentID,
-                                items: cart,
-                                totalPrice: total,
-                                timestamp: new Date().toLocaleString()
-                            }).then(function () {
-                                alert("結帳成功！");
-                                localStorage.removeItem('cart');
-                                window.location.href = "history.html";
-                            });
-                        });
-                    }
-                }
-            });
+            db.runTransaction(function(transaction) {
+                return transaction.get(lockerRef).then(function(lockerDoc) {
+                    var usedCount = lockerDoc.data().usedCount || 0;
+                    if (usedCount >= 50) throw "目前櫃位已滿，請稍後再試。";
+                    return transaction.get(userRef).then(function(userDoc) {
+                        var balance = userDoc.data().balance || 0;
+                        if (balance < total) throw "餘額不足！";
+                        
+                        var assignedLocker = usedCount + 1; // 分配櫃位號碼
+                        transaction.update(lockerRef, { usedCount: usedCount + 1 });
+                        transaction.update(userRef, { balance: balance - total });
+                        return { lockerNo: assignedLocker };
+                    });
+                });
+            }).then(function(result) {
+                db.collection("orders").add({
+                    studentID: studentID, items: cart, totalPrice: total, pickupTime: pickupTimeValue,
+                    lockerNo: result.lockerNo, status: "待領取", timestamp: new Date().toLocaleString('zh-TW', { hour12: true })
+                }).then(function () {
+                    alert("結帳成功！您的櫃位號碼是：【 " + result.lockerNo + " 】號，請務必記住。");
+                    localStorage.removeItem('cart');
+                    window.location.href = "history.html";
+                });
+            }).catch(alert);
         }
 
-        function removeItem(index) {
-            var cart = JSON.parse(localStorage.getItem('cart')) || [];
-            cart.splice(index, 1);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            renderCart();
-        }
-
-        function clearCart() {
-            if (confirm("確定要清空嗎？")) {
-                localStorage.removeItem('cart');
-                renderCart();
-            }
-        }
-
-
-        window.onload = renderCart;
+        function updateQuantity(i, q) { var cart = JSON.parse(localStorage.getItem('cart')); cart[i].quantity = parseInt(q); localStorage.setItem('cart', JSON.stringify(cart)); renderCart(); }
+        function removeItem(i) { var cart = JSON.parse(localStorage.getItem('cart')); cart.splice(i, 1); localStorage.setItem('cart', JSON.stringify(cart)); renderCart(); }
+        function clearCart() { if(confirm("確定清空？")){ localStorage.removeItem('cart'); renderCart(); } }
+        window.onload = function() { renderCart(); updateMinTime(); };
     </script>
 </body>
-
 </html>

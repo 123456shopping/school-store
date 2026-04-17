@@ -1,169 +1,71 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
     <title>交易紀錄 - 合作社線上系統</title>
     <style>
-        .order-card {
-            background: white;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            border-left: 5px solid hsl(205, 73%,58%) ;
-        }
-
-        .order-date {
-            font-weight: bold;
-            color:hsl(205, 73%, 58%) ;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-        }
-
-        .item-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9em;
-            padding: 5px 0;
-            border-bottom: 1px dashed #eee;
-        }
-
-        .total-price {
-            text-align: right;
-            font-weight: bold;
-            margin-top: 10px;
-            color: #d9534f;
-            font-size: 1.1em;
-        }
-
-        #loading-msg {
-            text-align: center;
-            color: #666;
-            margin-top: 20px;
-        }
+        .order-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 5px solid hsl(205, 73%, 58%); }
+        .order-date { font-weight: bold; color: hsl(205, 73%, 58%); border-bottom: 1px solid #eee; margin-bottom: 10px; padding-bottom: 5px; }
+        .item-row { display: flex; justify-content: space-between; font-size: 0.9em; padding: 5px 0; border-bottom: 1px dashed #eee; }
+        .total-price { text-align: right; font-weight: bold; margin-top: 10px; color: #d9534f; font-size: 1.1em; }
+        .locker-tag { background: #fff3cd; padding: 8px; margin-top: 10px; border-radius: 4px; color: #856404; font-weight: bold; text-align: center; border: 1px solid #ffeeba; }
+        .pickup-btn { margin-top:10px; background:#2277b9; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer; width:100%; font-weight:bold; }
     </style>
 </head>
-
 <body>
-    <header>
-        <h1>交易紀錄</h1>
-        <nav>
-            <ul>
-                <li><a href="home.html">回首頁</a></li>
-                <li><a href="cart.html">購物車</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <main id="history-container" style="padding: 20px;">
-        <p id="loading-msg">正在讀取紀錄...</p>
-    </main>
+    <header><h1>交易紀錄</h1><nav><ul><li><a href="home.html">回首頁</a></li><li><a href="cart.html">購物車</a></li></ul></nav></header>
+    <main id="history-container" style="padding: 20px;"><p id="loading-msg">正在讀取紀錄...</p></main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
     <script>
-        var firebaseConfig = {
-            apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
-            projectId: "xinnini1222",
-            storageBucket: "xinnini1222.firebasestorage.app",
-            messagingSenderId: "1071285094200",
-            appId: "1:1071285094200:web:baf568b0060bf93ede8cb6"
-        };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        var firebaseConfig = { apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM", projectId: "xinnini1222", storageBucket: "xinnini1222.firebasestorage.app", messagingSenderId: "1071285094200", appId: "1:1071285094200:web:baf568b0060bf93ede8cb6" };
+        firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
         function loadHistory() {
-            var studentID = localStorage.getItem('studentID');
-            var container = document.getElementById('history-container');
-            var loadingMsg = document.getElementById('loading-msg');
+            var studentID = localStorage.getItem('studentID'), container = document.getElementById('history-container');
+            if (!studentID) { container.innerHTML = "<p>請先登入！</p>"; return; }
 
-            if (!studentID) {
-                container.innerHTML = "<p>請先登入！</p>";
-                return;
-            }
-
-            db.collection("orders")
-                .where("studentID", "==", studentID)
-                .get()
-                .then(function (querySnapshot) {
-                    loadingMsg.style.display = 'none';
-
-                    if (querySnapshot.empty) {
-                        container.innerHTML = "<p>目前尚無交易紀錄。</p>";
-                        return;
+            db.collection("orders").where("studentID", "==", studentID).orderBy("timestamp", "desc").get().then(snap => {
+                document.getElementById('loading-msg').style.display = 'none';
+                if (snap.empty) { container.innerHTML = "<p>目前尚無紀錄。</p>"; return; }
+                let html = "";
+                snap.forEach(doc => {
+                    let order = doc.data(), id = doc.id;
+                    let card = `<div class="order-card"><div class="order-date">交易時間：${order.timestamp}</div>`;
+                    
+                    if (order.items) {
+                        order.items.forEach(item => card += `<div class="item-row"><span>${item.name} x ${item.quantity}</span><span>$${item.price*item.quantity}</span></div>`);
+                        card += `<div class="total-price">總計：$${order.totalPrice}</div>`;
+                        
+                        // 顯示櫃位號碼與按鈕
+                        if (order.lockerNo) card += `<div class="locker-tag">預留櫃位：${order.lockerNo} 號</div>`;
+                        if (order.status === "待領取") card += `<button class="pickup-btn" onclick="completeOrder('${id}')">確認領取 (釋出櫃位)</button>`;
+                        else card += `<div style="text-align:center; color:gray; margin-top:10px;">(物品已領取)</div>`;
+                    } else {
+                        card += `<div style="color:blue; font-weight:bold;">帳戶儲值：+$${order.amount || 0}</div>`;
                     }
-
-                    var finalHtml = "";
-                    var docs = [];
-                    querySnapshot.forEach(doc => docs.push(doc.data()));
-
-
-                    docs.sort((a, b) => {
-                        var timeA = new Date(a.timestamp || 0).getTime();
-                        var timeB = new Date(b.timestamp || 0).getTime();
-                        return timeB - timeA;
-                    });
-
-                    docs.forEach(function (order) {
-
-                        var displayDate = "未知時間";
-                        var rawDate = order.timestamp;
-
-                        if (rawDate) {
-                            var dateObj;
-                            if (rawDate && typeof rawDate === 'object' && rawDate.seconds) {
-                                dateObj = new Date(rawDate.seconds * 1000);
-                            } else {
-                                dateObj = new Date(rawDate);
-                            }
-
-                            if (dateObj && !isNaN(dateObj.getTime())) {
-                                displayDate = dateObj.toLocaleString('zh-TW', {
-                                    year: 'numeric',
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    second: '2-digit',
-                                    hour12: true
-                                });
-                            } else {
-                                displayDate = rawDate;
-                            }
-                        }
-
-                        var cardHtml = '<div class="order-card">';
-                        cardHtml += '<div class="order-date">交易時間：' + displayDate + '</div>';
-
-                        if (order.items && order.items.length > 0) {
-                            order.items.forEach(item => {
-                                cardHtml += `<div class="item-row"><span>${item.name} x ${item.quantity}</span><span>$${item.price * item.quantity}</span></div>`;
-                            });
-                            cardHtml += `<div class="total-price">總計：$${order.totalPrice}</div>`;
-                        } else if (order.type == "儲值" || order.amount) {
-                            var amount = order.amount || 0;
-                            cardHtml += `<div style="color: hsl(218, 53%, 48%) ; font-weight: bold; padding: 5px 0;">帳戶儲值：+$${amount}</div>`;
-                        }
-                        cardHtml += '</div>';
-                        finalHtml += cardHtml;
-                    });
-                    container.innerHTML = finalHtml;
-                })
-                .catch(err => {
-                    console.error("讀取失敗:", err);
-                    loadingMsg.innerText = "讀取失敗，請確認 Firebase 索引設定或網路。";
+                    html += card + `</div>`;
                 });
+                container.innerHTML = html;
+            });
+        }
+
+        function completeOrder(orderId) {
+            if (!confirm("確定已領取物品？這將釋出櫃位空間。")) return;
+            var lockerRef = db.collection("system_status").doc("locker_config"), orderRef = db.collection("orders").doc(orderId);
+            db.runTransaction(t => {
+                return t.get(lockerRef).then(doc => {
+                    var count = doc.data().usedCount || 0;
+                    t.update(lockerRef, { usedCount: count > 0 ? count - 1 : 0 });
+                    t.update(orderRef, { status: "已完成" });
+                });
+            }).then(() => { alert("領取成功，櫃位已釋出！"); location.reload(); }).catch(console.error);
         }
         window.onload = loadHistory;
     </script>
 </body>
-
 </html>
