@@ -1,48 +1,147 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
     <title>我的購物車 - 合作社線上系統</title>
     <style>
-        .cart-item { border-bottom: 1px solid #ddd; padding: 15px; display: flex; justify-content: space-between; align-items: center; background: white; margin-bottom: 10px; border-radius: 5px; }
-        #cart-container { max-width: 800px; margin: 20px auto; padding: 20px; }
-        .checkout-section { text-align: right; margin-top: 20px; padding: 20px; background: #fff; border-radius: 8px; }
-        .remove-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
-        .quantity-input { width: 60px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; margin-left: 10px; }
-        .pickup-section { text-align: left; margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px; border-left: 5px solid hsl(205, 73%, 58%); }
-        .pickup-section label { display: block; font-weight: bold; margin-bottom: 8px; color: #333; }
-        .pickup-section input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        .time-hint { font-size: 0.85em; color: #d9534f; margin-top: 5px; }
+        * {
+            transition: 0.3s;
+        }
+
+        .cart-item {
+            border-bottom: 1px solid #ddd;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        #cart-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .checkout-section {
+            text-align: right;
+            margin-top: 20px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+        }
+
+        .remove-btn {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .remove-btn:hover {
+            background: #c63a3a;
+
+        }
+
+        .quantity-input {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+
+        .pickup-section {
+            text-align: left;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 5px solid hsl(205, 73%, 58%);
+        }
+
+        .pickup-section label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .pickup-section input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .time-hint {
+            font-size: 0.85em;
+            color: #d9534f;
+            margin-top: 5px;
+        }
+
+        .balance-info {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: right;
+        }
+
+        #current-balance {
+            color: hsl(205, 73%, 58%);
+        }
+
+        .checkoutBtn2:hover {
+            background: hsl(205, 53%, 42%);
+        }
     </style>
 </head>
+
 <body>
     <header>
         <h1>我的購物車</h1>
-        <nav><ul><li><a href="home.html">回首頁</a></li><li><a href="history.html">交易紀錄</a></li></ul></nav>
+        <nav>
+            <ul>
+                <li><a href="home.html">回首頁</a></li>
+                <li><a href="history.html">交易紀錄</a></li>
+            </ul>
+        </nav>
     </header>
 
     <main id="cart-container">
         <div id="cart-list"></div>
         <div class="checkout-section">
+            <div class="balance-info">帳戶當前餘額：$<span id="current-balance">讀取中...</span></div>
+
             <div class="pickup-section">
                 <label for="pickup-time">請選擇領取食物時間：</label>
-                <input type="datetime-local" id="pickup-time" required onclick="updateMinTime()">
-                <p class="time-hint">* 僅限今日或未來的 08:00 - 16:00 領取</p>
+                <input type="datetime-local" id="pickup-time" required onclick="updateTimeRange()">
+                <p class="time-hint">* 僅限「今日」營業時間內 (08:00 - 16:00)，且不能選擇過去時間</p>
             </div>
+
             <h3>總金額：$<span id="total-price">0</span></h3>
-            <button id="checkoutBtn" onclick="handleCheckout()" style="padding: 10px 20px; background:hsl(205, 73%, 58%) ; color: white; border: none; border-radius: 5px; cursor: pointer;">確認結帳</button>
-            <button onclick="clearCart()" style="padding: 10px 20px; background: #929ea9; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">清空購物車</button>
+            <button class="checkoutBtn2" id="checkoutBtn" onclick="handleCheckout()"
+                style="padding: 10px 20px; background:hsl(205, 73%, 58%); color: white; border: none; border-radius: 5px; cursor: pointer;">確認結帳</button>
+            <button onclick="clearCart()"
+                style="padding: 10px 20px; background: #929ea9; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">清空購物車</button>
         </div>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
     <script>
         var firebaseConfig = {
             apiKey: "AIzaSyBzIDaKy4StkqJF_dwYHxpA6SjXRac45YM",
-            authDomain: "xinnini1222.firebaseapp.com",
             projectId: "xinnini1222",
             storageBucket: "xinnini1222.firebasestorage.app",
             messagingSenderId: "1071285094200",
@@ -51,16 +150,36 @@
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
-        function updateMinTime() {
+        // 更新時間範圍：限制只能選「今天」，且最小值為「現在」
+        function updateTimeRange() {
             var now = new Date();
-            var formattedNow = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2) + '-' + ('0' + now.getDate()).slice(-2) + 'T' + ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
-            document.getElementById('pickup-time').min = formattedNow;
+            var y = now.getFullYear(), m = ('0' + (now.getMonth() + 1)).slice(-2), d = ('0' + now.getDate()).slice(-2);
+            var hh = ('0' + now.getHours()).slice(-2), mm = ('0' + now.getMinutes()).slice(-2);
+
+            var todayStr = `${y}-${m}-${d}`;
+            var currentTimeStr = `${todayStr}T${hh}:${mm}`;
+            var businessStart = `${todayStr}T08:00`;
+            var businessEnd = `${todayStr}T16:00`;
+
+            var timeInput = document.getElementById('pickup-time');
+
+            // 如果現在還沒到 08:00，最小值設為 08:00
+            // 如果現在已經超過 08:00，最小值設為「現在時間」
+            timeInput.min = (currentTimeStr < businessStart) ? businessStart : currentTimeStr;
+            timeInput.max = businessEnd;
+        }
+
+        function loadUserBalance() {
+            var studentID = localStorage.getItem('studentID');
+            if (!studentID) return;
+            db.collection("users").doc(studentID).get().then(doc => {
+                if (doc.exists) document.getElementById('current-balance').innerText = doc.data().balance || 0;
+            });
         }
 
         function renderCart() {
-            var cart = JSON.parse(localStorage.getItem('cart')) || [];
-            var cartList = document.getElementById('cart-list'), totalPriceDisplay = document.getElementById('total-price'), total = 0;
-            cartList.innerHTML = (cart.length === 0) ? "<p>購物車是空的，快去逛逛吧！</p>" : "";
+            var cart = JSON.parse(localStorage.getItem('cart')) || [], cartList = document.getElementById('cart-list'), totalPriceDisplay = document.getElementById('total-price'), total = 0;
+            cartList.innerHTML = (cart.length == 0) ? "<p>購物車是空的</p>" : "";
             cart.forEach((item, i) => {
                 total += (item.price * item.quantity);
                 cartList.innerHTML += `<div class="cart-item"><div><strong>${item.name}</strong><br>單價: $${item.price} | 數量: <input type="number" class="quantity-input" value="${item.quantity}" min="1" onchange="updateQuantity(${i}, this.value)"></div><button class="remove-btn" onclick="removeItem(${i})">刪除</button></div>`;
@@ -70,34 +189,41 @@
 
         function handleCheckout() {
             var studentID = localStorage.getItem('studentID'), cart = JSON.parse(localStorage.getItem('cart')) || [], total = parseInt(document.getElementById('total-price').innerText), pickupTimeValue = document.getElementById('pickup-time').value;
-            if (!studentID || cart.length == 0 || !pickupTimeValue) { alert("請檢查登入、購物車或取貨時間！"); return; }
+            if (!studentID || cart.length == 0 || !pickupTimeValue) { alert("資訊不完整！"); return; }
 
             var selectedDate = new Date(pickupTimeValue), now = new Date();
-            if (selectedDate < now) { alert("不能設定過去時間！"); return; }
-            if (selectedDate.getHours() < 8 || selectedDate.getHours() >= 16) { alert("領取時間限 08:00 - 16:00。"); return; }
+
+            // 1. 檢查是否為過去的時間
+            if (selectedDate < now) { alert("領取時間不能選擇過去的時間！"); return; }
+
+            // 2. 檢查是否為當天
+            if (selectedDate.toDateString() !== now.toDateString()) { alert("領取日期僅限當天！"); return; }
+
+            // 3. 檢查營業時間
+            var hrs = selectedDate.getHours();
+            if (hrs < 8 || hrs >= 16) { alert("領取時間限 08:00 - 16:00。"); return; }
 
             var lockerRef = db.collection("system_status").doc("locker_config"), userRef = db.collection("users").doc(studentID);
 
-            db.runTransaction(function(transaction) {
-                return transaction.get(lockerRef).then(function(lockerDoc) {
-                    var usedCount = lockerDoc.data().usedCount || 0;
-                    if (usedCount >= 50) throw "目前櫃位已滿，請稍後再試。";
-                    return transaction.get(userRef).then(function(userDoc) {
-                        var balance = userDoc.data().balance || 0;
-                        if (balance < total) throw "餘額不足！";
-                        
-                        var assignedLocker = usedCount + 1; // 分配櫃位號碼
-                        transaction.update(lockerRef, { usedCount: usedCount + 1 });
-                        transaction.update(userRef, { balance: balance - total });
-                        return { lockerNo: assignedLocker };
+            db.runTransaction(t => {
+                return t.get(lockerRef).then(lDoc => {
+                    var used = lDoc.data().usedCount || 0;
+                    if (used >= 50) throw "櫃位已滿！";
+                    return t.get(userRef).then(uDoc => {
+                        var bal = uDoc.data().balance || 0;
+                        if (bal < total) throw "餘額不足！";
+                        var assigned = used + 1;
+                        t.update(lockerRef, { usedCount: used + 1 });
+                        t.update(userRef, { balance: bal - total });
+                        return assigned;
                     });
                 });
-            }).then(function(result) {
+            }).then(assignedNo => {
                 db.collection("orders").add({
                     studentID: studentID, items: cart, totalPrice: total, pickupTime: pickupTimeValue,
-                    lockerNo: result.lockerNo, status: "待領取", timestamp: new Date().toLocaleString('zh-TW', { hour12: true })
-                }).then(function () {
-                    alert("結帳成功！您的櫃位號碼是：【 " + result.lockerNo + " 】號，請務必記住。");
+                    lockerNo: assignedNo, status: "待領取", timestamp: new Date().toLocaleString('zh-TW', { hour12: true })
+                }).then(() => {
+                    alert("結帳成功！櫃位號碼：" + assignedNo);
                     localStorage.removeItem('cart');
                     window.location.href = "history.html";
                 });
@@ -106,8 +232,9 @@
 
         function updateQuantity(i, q) { var cart = JSON.parse(localStorage.getItem('cart')); cart[i].quantity = parseInt(q); localStorage.setItem('cart', JSON.stringify(cart)); renderCart(); }
         function removeItem(i) { var cart = JSON.parse(localStorage.getItem('cart')); cart.splice(i, 1); localStorage.setItem('cart', JSON.stringify(cart)); renderCart(); }
-        function clearCart() { if(confirm("確定清空？")){ localStorage.removeItem('cart'); renderCart(); } }
-        window.onload = function() { renderCart(); updateMinTime(); };
+        function clearCart() { localStorage.removeItem('cart'); renderCart(); }
+        window.onload = function () { renderCart(); updateTimeRange(); loadUserBalance(); };
     </script>
 </body>
+
 </html>
